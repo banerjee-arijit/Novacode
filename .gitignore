@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PWA generated service worker files (workbox)
+/public/workbox-*.js
+/public/sw.js.map
+/public/worker-*.js
+
+# test/scaffold projects (generated inside editor for demo)
+/my-react-app
+/vite-project
