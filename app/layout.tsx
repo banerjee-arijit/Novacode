@@ -19,10 +19,10 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/icon-192.png", type: "image/png" },
+      { url: "/icons/novacode-icon.svg", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/icon-192.png", type: "image/png" },
+      { url: "/icons/novacode-icon.svg", type: "image/svg+xml" },
     ],
   },
   appleWebApp: {

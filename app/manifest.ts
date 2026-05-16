@@ -4,21 +4,25 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'NovaCode AI',
     short_name: 'NovaCode',
-    description: 'Professional AI-powered Code Editor and WebContainer environment.',
-    start_url: '/',
+    description: 'Professional AI-powered Code Editor. Write, run, and improve code with AI assistance.',
+    start_url: '/editor',
     display: 'standalone',
+    orientation: 'landscape',
     background_color: '#05070a',
     theme_color: '#37d5ff',
+    categories: ['developer tools', 'productivity'],
     icons: [
       {
-        src: '/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png',
+        src: '/icons/novacode-icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any',
       },
       {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
+        src: '/icons/novacode-icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'maskable',
       },
     ],
   }
