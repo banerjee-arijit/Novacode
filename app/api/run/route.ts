@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!code || !language) return NextResponse.json({ error: "language and code are required." }, { status: 400 });
 
   // In production, proxy Java/Python execution to the Render runner
-  const runnerUrl = process.env.NEXT_PUBLIC_RUNNER_URL;
+  const runnerUrl = process.env.RUNNER_URL;
   if (runnerUrl && (language === "java" || language === "python")) {
     try {
       const resp = await fetch(`${runnerUrl}/run`, {
@@ -24,9 +24,9 @@ export async function POST(request: Request) {
       });
       const data = await resp.json();
       return NextResponse.json(data);
-    } catch (error) {
+    } catch {
       return NextResponse.json({
-        output: "Runner service is unavailable. Please try again in a moment.",
+        output: "⚠️ Runner service is starting up (cold start). Please wait 30 seconds and try again.",
       });
     }
   }
