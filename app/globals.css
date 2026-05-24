@@ -188,8 +188,13 @@ button, input, select, textarea {
 
 .cm-cursor {
   border-color: var(--accent) !important;
-  border-width: 2px !important;
+  border-width: 1px !important;
+  border-left-width: 1px !important;
   transition: top 80ms ease, left 80ms ease;
+}
+
+.cm-cursorLayer {
+  animation: none !important;
 }
 
 .cm-focused { outline: none !important; }

@@ -671,41 +671,29 @@ export default function EditorPage() {
   return (
     <main className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--background)] text-[var(--foreground)]" style={editorStyle}>
       {/* 1. Header (Codient Title Bar) */}
-      <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--panel)] px-3.5 select-none z-30">
-        <div className="flex items-center gap-3">
-          {/* Spinner & Logo */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <svg className="animate-spin h-4 w-4 text-cyan-400" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--panel)] px-3 select-none z-30">
+        {/* Left Side: Logo + Menus */}
+        <div className="flex items-center gap-2">
+          {/* Static geometric Logo */}
+          <div className="flex items-center gap-1.5 shrink-0 mr-2">
+            <svg className="h-4.5 w-4.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" fill="currentColor" fillOpacity="0.15" />
+              <line x1="12" y1="22" x2="12" y2="15.5" />
+              <polyline points="22 8.5 12 15.5 2 8.5" />
+              <line x1="12" y1="2" x2="12" y2="8.5" />
             </svg>
-            <span className="font-black text-sm tracking-tight text-white font-sans">Codient</span>
           </div>
 
-          {/* Project Dropdown Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-7.5 px-3.5 bg-[var(--panel-2)] hover:bg-[var(--line)]/55 border border-[var(--line)] text-zinc-300 rounded-lg text-xs font-semibold flex items-center gap-2 focus:outline-none cursor-pointer">
-                <span>Real Estate Landing...</span>
-                <ChevronRight className="w-3 h-3 rotate-90 opacity-75" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 bg-[var(--panel-2)] border border-[var(--line)] p-1 text-xs text-zinc-300 rounded-lg">
-              <DropdownMenuItem className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[var(--line)]">Real Estate Landing Page</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[var(--line)]">Crypto Yield Farm Dashboard</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer py-1.5 px-2 rounded-md hover:bg-[var(--line)]">NFT RWA Marketplace</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Core file operations menus inside dropdown */}
-          <div className="flex items-center gap-0.5 border-l border-[var(--line)]/40 pl-2 ml-1">
+          {/* Menus: File, View, Terminal, Help */}
+          <div className="flex items-center gap-0.5">
+            {/* File Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="ghost" className="h-7 px-2 rounded text-xs font-normal text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer focus:outline-none">
                   File
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-52 bg-[var(--panel-2)] border border-[var(--line)] rounded-lg p-1 text-xs">
+              <DropdownMenuContent align="start" className="w-52 bg-[var(--panel-2)] border border-[var(--line)] rounded-lg p-1 text-xs z-50">
                 <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => {
                   const newId = filesApi.createFile("plaintext", null);
                   if (newId) {
@@ -725,36 +713,82 @@ export default function EditorPage() {
                   <FileUp className="w-3.5 h-3.5 opacity-80" />
                   <span>Import File</span>
                 </DropdownMenuItem>
+                {activeFile && (
+                  <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={exportFile}>
+                    <Download className="w-3.5 h-3.5 opacity-80" />
+                    <span>Export File</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--accent)] hover:bg-[var(--line)]/40 focus:text-[var(--accent)]" onClick={handleShare}>
                   <Share2 className="w-3.5 h-3.5 opacity-80" />
-                  <span>Share</span>
+                  <span>Share Workspace</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* View Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-7 px-2 rounded text-xs font-normal text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer focus:outline-none">
+                  View
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52 bg-[var(--panel-2)] border border-[var(--line)] rounded-lg p-1 text-xs z-50">
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => setLeftCollapsed(!leftCollapsed)}>
+                  <span>Toggle Sidebar</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => setOutputVisible(!outputVisible)}>
+                  <span>Toggle Terminal</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => setRightCollapsed(!rightCollapsed)}>
+                  <span>Toggle AI Panel</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[var(--line)]/30" />
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => {
+                  setOpenFileIds(prev => prev.includes("settings") ? prev : [...prev, "settings"]);
+                  setActiveTabId("settings");
+                }}>
+                  <span>Open Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Terminal Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-7 px-2 rounded text-xs font-normal text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer focus:outline-none">
+                  Terminal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52 bg-[var(--panel-2)] border border-[var(--line)] rounded-lg p-1 text-xs z-50">
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => setOutputVisible(true)}>
+                  <span>New Terminal</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Help Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-7 px-2 rounded text-xs font-normal text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer focus:outline-none">
+                  Help
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52 bg-[var(--panel-2)] border border-[var(--line)] rounded-lg p-1 text-xs z-50">
+                <DropdownMenuItem className="gap-2 cursor-pointer rounded py-1.5 px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--line)]/40" onClick={() => alert("NovaCode v1.0.0 - Premium AI Code Editor")}>
+                  <span>About NovaCode</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        {/* View Mode Pill Tabs */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center bg-[var(--panel-2)] border border-[var(--line)] p-0.5 rounded-lg z-10">
-          {(["Preview", "Design", "Code"] as const).map((mode) => {
-            const isActive = viewMode === mode.toLowerCase();
-            return (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode.toLowerCase() as any)}
-                className={cn(
-                  "h-6 px-4 rounded-md text-[11px] font-semibold transition-all cursor-pointer",
-                  isActive 
-                    ? "bg-cyan-500 text-black shadow-sm" 
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
-                )}
-              >
-                {mode}
-              </button>
-            );
-          })}
+        {/* Center Side: Active Workspace & Filename */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[11px] text-zinc-400 font-medium font-sans truncate max-w-[280px] sm:max-w-[400px] pointer-events-none">
+          {activeFile ? `ai-code-editor - ${activeFile.name}` : "ai-code-editor"}
         </div>
 
+        {/* Right Side: Layout Toggles + Profile */}
         <div className="flex items-center gap-1.5 z-10">
           {/* Quick Layout Toggles */}
           <div className="hidden sm:flex items-center gap-0.5 border-r border-[var(--line)]/30 pr-2 mr-1">
@@ -791,8 +825,8 @@ export default function EditorPage() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-[var(--line)]/45 rounded-full cursor-pointer focus:outline-none flex items-center justify-center shrink-0">
-                  <div className="grid h-5.5 w-5.5 place-items-center rounded-full bg-blue-600 text-white font-bold text-[9px] select-none">
+                <Button size="sm" variant="ghost" className="h-7.5 w-7.5 p-0 hover:bg-[var(--line)]/45 rounded-full cursor-pointer focus:outline-none flex items-center justify-center shrink-0">
+                  <div className="relative h-6.5 w-6.5 overflow-hidden rounded-full border border-[var(--line)] bg-cyan-600 text-white font-bold text-xs flex items-center justify-center select-none shadow-sm hover:border-[var(--accent)] transition-all">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 </Button>
@@ -818,11 +852,27 @@ export default function EditorPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/auth">
-              <Button size="sm" variant="ghost" className="h-7 px-2.5 rounded text-[12px] font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer focus:outline-none">
-                Sign in
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" className="h-7.5 w-7.5 p-0 hover:bg-[var(--line)]/45 rounded-full cursor-pointer focus:outline-none flex items-center justify-center shrink-0">
+                  <div className="relative h-6.5 w-6.5 overflow-hidden rounded-full border border-[var(--line)] bg-zinc-700 text-zinc-300 font-bold text-xs flex items-center justify-center select-none shadow-sm hover:border-[var(--accent)] transition-all">
+                    <User className="w-3.5 h-3.5 text-zinc-400" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-[var(--panel-2)]/95 border border-[var(--line)]/45 rounded-xl p-1.5 text-xs backdrop-blur-md m-1 animate-in fade-in duration-200">
+                <div className="px-3 py-2 mb-1 bg-[var(--panel)]/55 rounded-lg border border-[var(--line)]/30 m-0.5">
+                  <p className="font-semibold text-[12.5px] text-[var(--foreground)]">Guest User</p>
+                  <p className="text-[11px] text-[var(--muted)] truncate mt-0.5">Not signed in</p>
+                </div>
+                <DropdownMenuSeparator className="bg-[var(--line)]/30 mx-1" />
+                <DropdownMenuItem asChild className="gap-2.5 cursor-pointer rounded-md m-0.5 py-2 px-3 text-xs">
+                  <Link href="/auth" className="flex w-full items-center gap-2 text-left cursor-pointer">
+                    <LogIn size={13} /> Sign in
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </header>
