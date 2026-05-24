@@ -1,6 +1,6 @@
 export type Language = "javascript" | "typescript" | "python" | "html" | "css" | "java" | "cpp" | "markdown" | "plaintext";
 
-export type ThemeMode = "dark" | "light" | "blueish" | "graphite" | "high-contrast";
+export type ThemeMode = "dark" | "light" | "blueish" | "graphite" | "high-contrast" | "nord" | "monokai" | "dracula" | "solarized-dark" | "tokyo-night";
 export type AIResponseStyle = "concise" | "detailed";
 export type AIModel = "gemini-2.5-flash" | "gemini-2.5-flash-lite" | "gemini-2.0-flash" | "gemini-2.0-flash-lite";
 export type KeybindingMode = "default" | "vim" | "emacs";

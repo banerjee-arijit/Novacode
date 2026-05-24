@@ -177,7 +177,7 @@ export default function EditorPage() {
   const [shared, setShared] = useState(false);
   const [highlightRange, setHighlightRange] = useState<{ from: number; to: number } | null>(null);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  
+
   const currentPath = useMemo(() => {
     if (!currentFolderId) return "~";
     const path: string[] = [];
@@ -222,7 +222,7 @@ export default function EditorPage() {
             setActiveTabId(filesApi.activeFileId);
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     } else if (filesApi.activeFileId) {
       setOpenFileIds([filesApi.activeFileId]);
       setActiveTabId(filesApi.activeFileId);
@@ -240,12 +240,12 @@ export default function EditorPage() {
   // 1. Synchronize tab states when active file changes inside the filesApi hook
   useEffect(() => {
     if (!filesApi.isInitialized || !filesApi.activeFileId || !isTabsLoaded) return;
-    
+
     setOpenFileIds(prev => {
       if (prev.includes(filesApi.activeFileId)) return prev;
       return [...prev, filesApi.activeFileId];
     });
-    
+
     setActiveTabId(filesApi.activeFileId);
   }, [filesApi.activeFileId, filesApi.isInitialized, isTabsLoaded]);
 
@@ -278,7 +278,7 @@ export default function EditorPage() {
     e.stopPropagation();
     const nextTabs = openFileIds.filter(id => id !== idToClose);
     setOpenFileIds(nextTabs);
-    
+
     if (activeTabId === idToClose) {
       if (nextTabs.length > 0) {
         const index = openFileIds.indexOf(idToClose);
@@ -299,7 +299,7 @@ export default function EditorPage() {
     }
     const file = filesApi.files.find(f => f.id === activeTabId);
     if (!file) return [];
-    
+
     const path: Array<{ type: "root" | "folder" | "file" | "settings"; name: string; id: string }> = [
       { type: "file", name: file.name, id: file.id }
     ];
@@ -502,12 +502,12 @@ export default function EditorPage() {
     if (!outputVisible) setOutputVisible(true);
     setRunResult(null);
     setTerminalOutput(prev => prev + `\nnovacode:${currentPath}$ ${command}`);
-    
+
     const parts = command.trim().split(/\s+/);
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
     const projectCommand = detectProjectCommand(command);
-    
+
     if (cmd === "help") {
       setTerminalOutput(prev => prev + `\nAvailable commands:\n  help                                Show this message\n  ls                                  List files and folders\n  cd <folder>                         Change directory\n  mkdir <name...>                     Create one or more directories\n  touch <name...>                     Create one or more files\n  npm create vite@latest my-app -- --template react-ts\n  npx create-react-app my-app         Create a React project structure\n  npm install                         Mark dependencies as ready for preview\n  npm run dev                         Preview the current React/Vite project\n  npm start                           Preview the current React app\n  clear                               Clear terminal\n\nUse Up and Down arrows to cycle through previous commands.\n`);
     } else if (cmd === "clear") {
@@ -600,12 +600,12 @@ export default function EditorPage() {
     if (!activeFile) return;
     const currentContent = activeFile.content;
     const newContent = currentContent ? `${currentContent}\n\n${code}` : code;
-    
+
     const startLine = currentContent ? currentContent.split("\n").length + 2 : 1;
     const endLine = startLine + code.split("\n").length - 1;
-    
+
     filesApi.updateFile(activeFile.id, { content: newContent });
-    
+
     // Slight delay to ensure CodeMirror has updated its document before we apply the highlight
     setTimeout(() => {
       setHighlightRange({ from: startLine, to: endLine });
@@ -937,7 +937,7 @@ export default function EditorPage() {
               title="GitHub"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.479C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.479C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
               </svg>
             </button>
           </div>
@@ -966,8 +966,8 @@ export default function EditorPage() {
 
         {/* B. Left Sidebar */}
         {!leftCollapsed && (
-          <div 
-            className="hidden md:flex flex-col shrink-0 overflow-hidden animate-slide-left border-r border-[var(--line)] bg-[var(--panel)]" 
+          <div
+            className="hidden md:flex flex-col shrink-0 overflow-hidden animate-slide-left border-r border-[var(--line)] bg-[var(--panel)]"
             style={{ width: leftWidth }}
           >
             {activeSidebarTab === "explorer" ? (
@@ -1197,188 +1197,20 @@ export default function EditorPage() {
               </div>
             ) : (
               /* Welcome Dashboard Screen */
-              <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[var(--background)] via-[var(--background)] to-[color-mix(in srgb, var(--accent) 4%, var(--background))] p-4 md:p-6 select-none flex items-center justify-center animate-fade-in-soft">
-                <div className="mx-auto w-full max-w-4xl flex flex-col gap-5 my-auto py-4">
-                  {/* Dashboard Header */}
-                  <div className="flex flex-col items-center text-center gap-2 relative py-3">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-gradient-to-tr from-[var(--accent)]/5 to-[var(--primary)]/5 blur-3xl pointer-events-none" />
-                    
-                    <div className="relative group">
-                      <div className="grid h-12 w-12 place-items-center rounded-xl border border-[var(--line)]/45 bg-[var(--panel-2)]/85 relative">
-                        <svg className="animate-spin h-6 w-6 text-cyan-400" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                      </div>
-                    </div>
+              <div className="flex-1 overflow-y-auto bg-[var(--background)] select-none flex flex-col items-center justify-center animate-fade-in-soft">
+                <div className="flex flex-col items-center justify-center -mt-10">
+                  {/* Antigravity Logo */}
+                  <svg className="w-[52px] bg-[url(\'\')] h-[52px] text-[var(--foreground)] mb-4 opacity-90 drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3C9 3 7 9 5 14C3.8 17 2.5 20 1 20C4.5 19.5 7 16 8.5 12C9.5 15.5 11 17 12 17C13 17 14.5 15.5 15.5 12C17 16 19.5 19.5 23 20C21.5 20 20.2 17 19 14C17 9 15 3 12 3Z" />
+                  </svg>
 
-                    <div className="z-10 mt-2">
-                      <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-[var(--foreground)] to-[var(--foreground)]/80 bg-clip-text text-transparent">
-                        Codient AI Workspace
-                      </h1>
-                      <p className="text-xs md:text-[13px] text-[var(--muted)] max-w-md mx-auto leading-relaxed mt-1">
-                        A browser-based IDE powered by Google Gemini. Write, run, and preview projects with AI assistance.
-                      </p>
-                    </div>
-                  </div>
+                  <h1 className="text-[20px] text-[var(--foreground)] font-normal mb-16 tracking-wide drop-shadow-sm">
+                    Antigravity IDE
+                  </h1>
 
-                  {/* Dashboard Actions Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 z-10">
-                    
-                    {/* Card 1: Start Building */}
-                    <Card className="glass-panel border-[var(--line)]/40 hover:border-[var(--accent)]/30 transition-all duration-300 rounded-xl">
-                      <CardHeader className="pb-3 flex flex-row items-center gap-3 p-4">
-                        <div className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] shrink-0">
-                          <FolderPlus size={15} />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-sm font-semibold">Start Building</CardTitle>
-                          <CardDescription className="text-[11px] text-[var(--muted)]">Create new workspace assets quickly</CardDescription>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-2 p-4 pt-0">
-                        <button
-                          onClick={() => {
-                            const newId = filesApi.createFile("plaintext", null);
-                            if (newId) {
-                              setOpenFileIds(prev => prev.includes(newId) ? prev : [...prev, newId]);
-                              setActiveTabId(newId);
-                            }
-                          }}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <File size={14} className="text-[var(--accent)] shrink-0" />
-                            Create New File
-                          </span>
-                          <span className="text-[10px] text-[var(--muted)] font-mono shrink-0">Ctrl + N</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => filesApi.createFolder(null)}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <FolderPlus size={14} className="text-[var(--accent)] shrink-0" />
-                            Create New Folder
-                          </span>
-                          <span className="text-[10px] text-[var(--muted)] font-mono shrink-0">Ctrl+Shift+N</span>
-                        </button>
-
-                        <button
-                          onClick={handleImport}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Upload size={14} className="text-[var(--accent)] shrink-0" />
-                            Import File
-                          </span>
-                          <span className="text-[10px] text-[var(--muted)] font-mono shrink-0">From disk</span>
-                        </button>
-                      </CardContent>
-                    </Card>
-
-                    {/* Card 2: Project Templates */}
-                    <Card className="glass-panel border-[var(--line)]/40 hover:border-[var(--accent)]/30 transition-all duration-300 rounded-xl">
-                      <CardHeader className="pb-3 flex flex-row items-center gap-3 p-4">
-                        <div className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] shrink-0">
-                          <Play size={15} />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-sm font-semibold">Project Templates</CardTitle>
-                          <CardDescription className="text-[11px] text-[var(--muted)]">Bootstrap workspace apps in one click</CardDescription>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-2 p-4 pt-0">
-                        <button
-                          onClick={() => handleCreateTemplate("vite-react")}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Code2 size={14} className="text-blue-400 shrink-0" />
-                            Vite + React (JavaScript)
-                          </span>
-                          <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider shrink-0">React</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleCreateTemplate("vite-react-ts")}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Code2 size={14} className="text-sky-400 shrink-0" />
-                            Vite + React (TypeScript)
-                          </span>
-                          <span className="text-[9px] bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider shrink-0">TS</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleCreateTemplate("react-app")}
-                          className="flex items-center justify-between w-full min-h-10 h-auto py-2.5 px-3 rounded-lg border border-[var(--line)]/30 bg-[var(--panel-2)]/30 text-[13px] text-[var(--foreground)] hover:bg-[var(--line)]/40 hover:text-[var(--accent)] hover:border-[var(--accent)]/25 hover:scale-[1.015] active:scale-[0.99] transition-all text-left cursor-pointer gap-2"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Code2 size={14} className="text-indigo-400 shrink-0" />
-                            React App Starter
-                          </span>
-                          <span className="text-[9px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider shrink-0">CRA</span>
-                        </button>
-                      </CardContent>
-                    </Card>
-
-                    {/* Card 3: AI Assistant */}
-                    <Card className="glass-panel border-[var(--line)]/40 hover:border-[var(--accent)]/30 transition-all duration-300 rounded-xl">
-                      <CardHeader className="pb-3 flex flex-row items-center gap-3 p-4">
-                        <div className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] shrink-0">
-                          <Sparkles size={15} />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-sm font-semibold">Gemini AI Assistant</CardTitle>
-                          <CardDescription className="text-[11px] text-[var(--muted)]">Intelligent coding features at your service</CardDescription>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-2 p-4 pt-0 text-[12px] text-[var(--muted)] leading-relaxed">
-                        <div className="flex gap-2 items-start p-2.5 rounded-lg bg-[var(--panel-2)]/25 border border-[var(--line)]/20">
-                          <Bot size={14} className="text-[var(--accent)] mt-0.5 shrink-0" />
-                          <span><strong>Interactive Chat:</strong> Toggle the right panel (AI icon) to explain or write code.</span>
-                        </div>
-                        <div className="flex gap-2 items-start p-2.5 rounded-lg bg-[var(--panel-2)]/25 border border-[var(--line)]/20">
-                          <Sparkles size={14} className="text-[var(--accent)] mt-0.5 shrink-0" />
-                          <span><strong>Autocomplete:</strong> In-editor suggestions and ghost text guide you as you write.</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Card 4: Keyboard Shortcuts */}
-                    <Card className="glass-panel border-[var(--line)]/40 hover:border-[var(--accent)]/30 transition-all duration-300 rounded-xl">
-                      <CardHeader className="pb-3 flex flex-row items-center gap-3 p-4">
-                        <div className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] shrink-0">
-                          <Keyboard size={15} />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-sm font-semibold">Keyboard Shortcuts</CardTitle>
-                          <CardDescription className="text-[11px] text-[var(--muted)]">Speed up your workflow in the editor</CardDescription>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col gap-2 p-4 pt-0">
-                        <div className="flex items-center justify-between text-[12px] py-1.5 px-2.5 hover:bg-[var(--line)]/25 rounded-md transition-colors">
-                          <span>Toggle left sidebar</span>
-                          <kbd className="vscode-welcome-key text-[10px] md:text-xs font-mono px-2 py-0.5 border border-[var(--line)]/30 rounded bg-[var(--panel-2)]/50">Ctrl + B</kbd>
-                        </div>
-                        <div className="flex items-center justify-between text-[12px] py-1.5 px-2.5 hover:bg-[var(--line)]/25 rounded-md transition-colors">
-                          <span>Global search in files</span>
-                          <kbd className="vscode-welcome-key text-[10px] md:text-xs font-mono px-2 py-0.5 border border-[var(--line)]/30 rounded bg-[var(--panel-2)]/50">Ctrl+Shift+F</kbd>
-                        </div>
-                        <div className="flex items-center justify-between text-[12px] py-1.5 px-2.5 hover:bg-[var(--line)]/25 rounded-md transition-colors">
-                          <span>Open settings</span>
-                          <kbd className="vscode-welcome-key text-[10px] md:text-xs font-mono px-2 py-0.5 border border-[var(--line)]/30 rounded bg-[var(--panel-2)]/50">Ctrl + ,</kbd>
-                        </div>
-                        <div className="flex items-center justify-between text-[12px] py-1.5 px-2.5 hover:bg-[var(--line)]/25 rounded-md transition-colors">
-                          <span>Create new file</span>
-                          <kbd className="vscode-welcome-key text-[10px] md:text-xs font-mono px-2 py-0.5 border border-[var(--line)]/30 rounded bg-[var(--panel-2)]/50">Ctrl + N</kbd>
-                        </div>
-                      </CardContent>
-                    </Card>
-
+                  <div className="flex items-center gap-[120px] text-[var(--muted)] text-[13px] hover:text-[var(--foreground)] transition-colors cursor-pointer" onClick={() => setAiEditOpen(true)}>
+                    <span>Code with Agent</span>
+                    <kbd className="font-mono text-[11px] px-2 py-0.5 bg-zinc-800/40 border border-zinc-700/50 rounded shadow-sm">Ctrl + L</kbd>
                   </div>
                 </div>
               </div>
@@ -1400,8 +1232,8 @@ export default function EditorPage() {
         {!rightCollapsed && (
           <>
             {/* Desktop Right AI Panel */}
-            <div 
-              className="hidden md:flex flex-col shrink-0 overflow-hidden animate-slide-right border-l border-[var(--line)] bg-[var(--panel)]" 
+            <div
+              className="hidden md:flex flex-col shrink-0 overflow-hidden animate-slide-right border-l border-[var(--line)] bg-[var(--panel)]"
               style={{ width: `min(100%, ${rightWidth}px)` }}
             >
               <AIChatPanel

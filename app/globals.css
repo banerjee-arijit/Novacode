@@ -106,6 +106,101 @@
   --tab-active-border: #ffffff;
 }
 
+:root[data-theme="nord"] {
+  --background:  #2e3440;
+  --panel:       #3b4252;
+  --panel-2:     #2e3440;
+  --panel-3:     #434c5e;
+  --line:        #4c566a;
+  --line-2:      #3b4252;
+  --foreground:  #d8dee9;
+  --muted:       #e5e9f0;
+  --muted-2:     #4c566a;
+  --accent:      #88c0d0;
+  --accent-2:    #81a1c1;
+  --accent-glow: rgba(136, 192, 208, 0.15);
+  --primary:     #88c0d0;
+  --primary-foreground: #2e3440;
+  --tab-active-border: #88c0d0;
+  color-scheme: dark;
+}
+
+:root[data-theme="monokai"] {
+  --background:  #272822;
+  --panel:       #1e1f1c;
+  --panel-2:     #272822;
+  --panel-3:     #3e3d32;
+  --line:        #3e3d32;
+  --line-2:      #1e1f1c;
+  --foreground:  #f8f8f2;
+  --muted:       #75715e;
+  --muted-2:     #49483e;
+  --accent:      #a6e22e;
+  --accent-2:    #f92672;
+  --accent-glow: rgba(166, 226, 46, 0.15);
+  --primary:     #a6e22e;
+  --primary-foreground: #272822;
+  --tab-active-border: #a6e22e;
+  color-scheme: dark;
+}
+
+:root[data-theme="dracula"] {
+  --background:  #282a36;
+  --panel:       #21222c;
+  --panel-2:     #282a36;
+  --panel-3:     #44475a;
+  --line:        #44475a;
+  --line-2:      #21222c;
+  --foreground:  #f8f8f2;
+  --muted:       #6272a4;
+  --muted-2:     #44475a;
+  --accent:      #bd93f9;
+  --accent-2:    #ff79c6;
+  --accent-glow: rgba(189, 147, 249, 0.15);
+  --primary:     #bd93f9;
+  --primary-foreground: #282a36;
+  --tab-active-border: #bd93f9;
+  color-scheme: dark;
+}
+
+:root[data-theme="solarized-dark"] {
+  --background:  #002b36;
+  --panel:       #073642;
+  --panel-2:     #002b36;
+  --panel-3:     #586e75;
+  --line:        #586e75;
+  --line-2:      #073642;
+  --foreground:  #839496;
+  --muted:       #586e75;
+  --muted-2:     #073642;
+  --accent:      #2aa198;
+  --accent-2:    #b58900;
+  --accent-glow: rgba(42, 161, 152, 0.15);
+  --primary:     #2aa198;
+  --primary-foreground: #002b36;
+  --tab-active-border: #2aa198;
+  color-scheme: dark;
+}
+
+:root[data-theme="tokyo-night"] {
+  --background:  #1a1b26;
+  --panel:       #16161e;
+  --panel-2:     #1a1b26;
+  --panel-3:     #292e42;
+  --line:        #414868;
+  --line-2:      #16161e;
+  --foreground:  #c0caf5;
+  --muted:       #565f89;
+  --muted-2:     #414868;
+  --accent:      #7aa2f7;
+  --accent-2:    #bb9af7;
+  --accent-glow: rgba(122, 162, 247, 0.15);
+  --primary:     #7aa2f7;
+  --primary-foreground: #1a1b26;
+  --tab-active-border: #7aa2f7;
+  color-scheme: dark;
+}
+
 /* ============================================================
    THEME CONFIG
    ============================================================ */

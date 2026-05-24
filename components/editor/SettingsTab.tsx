@@ -78,6 +78,11 @@ export function SettingsTab({ settings, setSettings }: SettingsTabProps) {
     { value: "blueish", label: "Night Owl" },
     { value: "graphite", label: "Dim (Monokai)" },
     { value: "high-contrast", label: "High Contrast" },
+    { value: "nord", label: "Nord" },
+    { value: "monokai", label: "Monokai" },
+    { value: "dracula", label: "Dracula" },
+    { value: "solarized-dark", label: "Solarized Dark" },
+    { value: "tokyo-night", label: "Tokyo Night" },
   ];
 
   const aiModels: Array<{ value: AIModel; label: string }> = [
