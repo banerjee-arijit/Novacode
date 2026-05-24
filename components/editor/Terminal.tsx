@@ -71,7 +71,9 @@ export function Terminal({ instance, visible, size, onCommandReady, onWriteTextR
   useEffect(() => {
     if (!instance || !xtermRef.current || shellProcessRef.current) return;
 
+    let dataListener: { dispose(): void } | null = null;
     let activeWriter: WritableStreamDefaultWriter<string> | null = null;
+    let isDisposed = false;
 
     async function startShell() {
       try {
@@ -81,6 +83,13 @@ export function Terminal({ instance, visible, size, onCommandReady, onWriteTextR
             rows: xtermRef.current!.rows,
           },
         });
+
+        if (isDisposed) {
+          try {
+            shellProcess.kill();
+          } catch (e) {}
+          return;
+        }
 
         shellProcessRef.current = shellProcess;
 
@@ -97,21 +106,24 @@ export function Terminal({ instance, visible, size, onCommandReady, onWriteTextR
         activeWriter = writer;
 
         // Bind standard stdin keystrokes
-        const dataListener = xtermRef.current!.onData((data) => {
-          writer.write(data);
+        dataListener = xtermRef.current!.onData((data) => {
+          try {
+            writer.write(data);
+          } catch (e) {
+            console.warn("Write error:", e);
+          }
         });
 
         // Expose command sender callback (Run trigger)
         if (onCommandReady) {
           onCommandReady((cmd: string) => {
-            writer.write(cmd);
+            try {
+              writer.write(cmd);
+            } catch (e) {
+              console.warn("Programmatic write error:", e);
+            }
           });
         }
-
-        return () => {
-          dataListener.dispose();
-          writer.releaseLock();
-        };
       } catch (err) {
         console.error("Shell launch failed:", err);
       }
@@ -120,9 +132,18 @@ export function Terminal({ instance, visible, size, onCommandReady, onWriteTextR
     startShell();
 
     return () => {
+      isDisposed = true;
+      if (dataListener) {
+        dataListener.dispose();
+      }
       if (activeWriter) {
         try {
           activeWriter.releaseLock();
+        } catch (e) {}
+      }
+      if (shellProcessRef.current) {
+        try {
+          shellProcessRef.current.kill();
         } catch (e) {}
       }
       shellProcessRef.current = null;

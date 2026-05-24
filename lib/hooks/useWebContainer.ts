@@ -240,11 +240,11 @@ export function useWebContainer(
       }
     };
 
-    // Run sync scanner every 1.5 seconds (extremely light-weight as ignored folders are skipped)
-    interval = setInterval(syncFromContainer, 1500);
+    // Run sync scanner every 3 seconds (light-weight — ignored folders are skipped)
+    interval = setInterval(syncFromContainer, 3000);
 
     return () => clearInterval(interval);
-  }, [instance, files, folders]);
+  }, [instance]); // Only restart when instance changes, not on every file edit
 
   return { instance, booting };
 }

@@ -1,10 +1,12 @@
-const CACHE_NAME = "novacode-v1";
+const CACHE_NAME = "novacode-v2";
 const STATIC_ASSETS = [
-  "/",
-  "/editor",
-  "/icon-192.png",
-  "/icon-512.png",
+  "/icons/novacode-icon.svg",
 ];
+
+// Only cache safe http/https requests
+function isCacheableRequest(request) {
+  return request.url.startsWith("http://") || request.url.startsWith("https://");
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,37 +29,42 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Skip non-GET and non-http(s) requests (e.g. chrome-extension://)
   if (event.request.method !== "GET") return;
+  if (!isCacheableRequest(event.request)) return;
 
   const url = new URL(event.request.url);
+
+  // Never intercept API routes — always go to network
   if (url.pathname.startsWith("/api/")) return;
 
-  const isStaticAsset = 
+  // Cache-first for static assets
+  const isStaticAsset =
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css") ||
     url.pathname.endsWith(".svg") ||
     url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".woff2");
+    url.pathname.endsWith(".woff2") ||
+    url.pathname.endsWith(".woff") ||
+    url.pathname.endsWith(".ico");
 
   if (isStaticAsset) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (cachedResponse) return cachedResponse;
+        return fetch(event.request).then((networkResponse) => {
           if (networkResponse.ok) {
             const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
-        }).catch(() => undefined);
-
-        return cachedResponse || fetchPromise;
+        }).catch(() => new Response("", { status: 503 }));
       })
     );
     return;
   }
 
+  // Network-first for navigation — fall back to cache
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
@@ -68,12 +75,9 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => {
-          return caches.match(event.request).then((cached) => {
-            if (cached) return cached;
-            return caches.match("/");
-          });
-        })
+        .catch(() =>
+          caches.match(event.request).then((cached) => cached || caches.match("/"))
+        )
     );
   }
 });

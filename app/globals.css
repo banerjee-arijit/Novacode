@@ -218,8 +218,8 @@
   --color-accent-2: var(--accent-2);
   --color-accent-glow: var(--accent-glow);
   
-  --font-sans: var(--font-inter), "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains), "Fira Code", ui-monospace, "Cascadia Code", Menlo, monospace;
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Cascadia Code", "Fira Code", ui-monospace, "JetBrains Mono", Menlo, "Consolas", monospace;
 }
 
 /* ============================================================
