@@ -159,6 +159,7 @@ export default function EditorPage() {
 
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
   const [selectedCode, setSelectedCode] = useState("");
+  const [selectedLines, setSelectedLines] = useState<{ start: number; end: number } | null>(null);
   const [selectionPos, setSelectionPos] = useState<{ x: number; y: number } | null>(null);
   const [aiEditOpen, setAiEditOpen] = useState(false);
   const [outputVisible, setOutputVisible] = useState(false);
@@ -1168,16 +1169,9 @@ export default function EditorPage() {
                       onSelectionPosition={(pos) => {
                         if (!aiEditOpen) setSelectionPos(pos);
                       }}
+                      onSelectionLinesChange={setSelectedLines}
                       highlightRange={highlightRange}
                     />
-                    {/* Edit with AI Tooltip */}
-                    {selectionPos && selectedCode.trim().length > 0 && !aiEditOpen && (
-                      <AIEditTooltip
-                        x={selectionPos.x}
-                        y={selectionPos.y}
-                        onClick={() => setAiEditOpen(true)}
-                      />
-                    )}
                   </div>
                 )}
                 <OutputPanel
@@ -1241,6 +1235,7 @@ export default function EditorPage() {
                 loading={ai.loading}
                 activeFile={activeFile}
                 selectedCode={selectedCode}
+                selectedLines={selectedLines}
                 settings={settings}
                 onPrompt={ai.sendMessage}
                 onInsert={handleInsertCode}
@@ -1254,6 +1249,7 @@ export default function EditorPage() {
                 loading={ai.loading}
                 activeFile={activeFile}
                 selectedCode={selectedCode}
+                selectedLines={selectedLines}
                 settings={settings}
                 onPrompt={ai.sendMessage}
                 onInsert={handleInsertCode}

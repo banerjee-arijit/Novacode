@@ -14,6 +14,7 @@ type CodeEditorProps = {
   onCursorChange: (line: number, column: number) => void;
   onSelectionChange: (value: string) => void;
   onSelectionPosition?: (coords: { x: number; y: number } | null) => void;
+  onSelectionLinesChange?: (lines: { start: number; end: number } | null) => void;
   highlightRange?: { from: number; to: number } | null;
 };
 
@@ -27,6 +28,7 @@ export function CodeEditor({
   onCursorChange,
   onSelectionChange,
   onSelectionPosition,
+  onSelectionLinesChange,
   highlightRange,
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -35,13 +37,15 @@ export function CodeEditor({
   const cursorRef = useRef(onCursorChange);
   const selectionRef = useRef(onSelectionChange);
   const selectionPositionRef = useRef(onSelectionPosition);
+  const selectionLinesRef = useRef(onSelectionLinesChange);
 
   useEffect(() => {
     changeRef.current = onChange;
     cursorRef.current = onCursorChange;
     selectionRef.current = onSelectionChange;
     selectionPositionRef.current = onSelectionPosition;
-  }, [onChange, onCursorChange, onSelectionChange, onSelectionPosition]);
+    selectionLinesRef.current = onSelectionLinesChange;
+  }, [onChange, onCursorChange, onSelectionChange, onSelectionPosition, onSelectionLinesChange]);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -58,6 +62,16 @@ export function CodeEditor({
           const range = view.state.selection.main;
           const selectedText = range.empty ? "" : view.state.sliceDoc(range.from, range.to);
           selectionRef.current(selectedText);
+
+          if (selectionLinesRef.current) {
+            if (!range.empty && selectedText.trim().length > 0) {
+              const startLine = view.state.doc.lineAt(range.from).number;
+              const endLine = view.state.doc.lineAt(range.to).number;
+              selectionLinesRef.current({ start: startLine, end: endLine });
+            } else {
+              selectionLinesRef.current(null);
+            }
+          }
 
           // Report selection position for tooltip
           if (selectionPositionRef.current) {

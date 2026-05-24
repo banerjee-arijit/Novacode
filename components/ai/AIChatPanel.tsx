@@ -14,6 +14,7 @@ type AIChatPanelProps = {
   loading: boolean;
   activeFile?: WorkspaceFile;
   selectedCode: string;
+  selectedLines?: { start: number; end: number } | null;
   settings: EditorSettings;
   onPrompt: (message: string, mode?: string) => void;
   onInsert: (code: string) => void;
@@ -27,7 +28,7 @@ const QUICK_ACTIONS = [
   { icon: Sparkles, label: "Optimize", prompt: "Optimize this code for better performance", color: "text-violet-400" },
 ];
 
-function AIChatPanelComponent({ messages, loading, activeFile, selectedCode, onPrompt, onInsert, onClearChat }: AIChatPanelProps) {
+function AIChatPanelComponent({ messages, loading, activeFile, selectedCode, selectedLines, onPrompt, onInsert, onClearChat }: AIChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,7 +110,17 @@ function AIChatPanelComponent({ messages, loading, activeFile, selectedCode, onP
               <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-[var(--accent)]/8 border border-[var(--accent)]/20 text-[11px] text-[var(--muted)]">
                 <Code2 size={11} className="text-[var(--accent)] shrink-0" />
                 <span>
-                  <span className="text-[var(--accent)]">{selectedCode.split("\n").length} lines</span> selected — ask me about it!
+                  <span className="text-[var(--accent)]">
+                    {activeFile ? activeFile.name : "Code"}
+                  </span>
+                  {selectedLines && selectedLines.start !== selectedLines.end ? (
+                    ` lines ${selectedLines.start} to ${selectedLines.end} selected`
+                  ) : selectedLines ? (
+                    ` line ${selectedLines.start} selected`
+                  ) : (
+                    ` ${selectedCode.split("\n").length} lines selected`
+                  )}
+                  {" "}— ask me about it!
                 </span>
               </div>
             )}
@@ -170,6 +181,8 @@ export const AIChatPanel = React.memo(AIChatPanelComponent, (prevProps, nextProp
     prevProps.messages === nextProps.messages &&
     prevProps.loading === nextProps.loading &&
     prevProps.selectedCode === nextProps.selectedCode &&
+    prevProps.selectedLines?.start === nextProps.selectedLines?.start &&
+    prevProps.selectedLines?.end === nextProps.selectedLines?.end &&
     prevProps.activeFile === nextProps.activeFile
   );
 });
