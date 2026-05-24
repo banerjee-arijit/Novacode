@@ -9,13 +9,18 @@ import { WebContainer } from "@webcontainer/api";
 type TerminalProps = {
   instance: WebContainer | null;
   visible: boolean;
+  size: number;
+  onCommandReady?: (cb: (cmd: string) => void) => void;
+  onWriteTextReady?: (cb: (text: string) => void) => void;
 };
 
-export function Terminal({ instance, visible }: TerminalProps) {
+export function Terminal({ instance, visible, size, onCommandReady, onWriteTextReady }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
   const shellProcessRef = useRef<any>(null);
 
+  // Initialize xterm.js terminal instance
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
 
@@ -29,6 +34,7 @@ export function Terminal({ instance, visible }: TerminalProps) {
       },
       fontSize: 12,
       fontFamily: "Geist Mono, monospace",
+      convertEol: true, // handles EOL conversion natively for stdout
     });
 
     const fitAddon = new FitAddon();
@@ -37,55 +43,108 @@ export function Terminal({ instance, visible }: TerminalProps) {
     fitAddon.fit();
 
     xtermRef.current = term;
+    fitAddonRef.current = fitAddon;
 
-    window.addEventListener("resize", () => fitAddon.fit());
+    const handleWindowResize = () => {
+      try {
+        fitAddon.fit();
+      } catch (err) {}
+    };
+    window.addEventListener("resize", handleWindowResize);
+
+    // Bind custom text printer if provided
+    if (onWriteTextReady) {
+      onWriteTextReady((text: string) => {
+        term.write(text);
+      });
+    }
 
     return () => {
+      window.removeEventListener("resize", handleWindowResize);
       term.dispose();
       xtermRef.current = null;
+      fitAddonRef.current = null;
     };
-  }, []);
+  }, [onWriteTextReady]);
 
+  // Connect shell process from WebContainer instance
   useEffect(() => {
     if (!instance || !xtermRef.current || shellProcessRef.current) return;
 
+    let activeWriter: WritableStreamDefaultWriter<string> | null = null;
+
     async function startShell() {
-      const shellProcess = await instance!.spawn("jsh", {
-        terminal: {
-          cols: xtermRef.current!.cols,
-          rows: xtermRef.current!.rows,
-        },
-      });
-
-      shellProcessRef.current = shellProcess;
-
-      shellProcess.output.pipeTo(
-        new WritableStream({
-          write(data) {
-            xtermRef.current!.write(data);
+      try {
+        const shellProcess = await instance!.spawn("jsh", {
+          terminal: {
+            cols: xtermRef.current!.cols,
+            rows: xtermRef.current!.rows,
           },
-        })
-      );
+        });
 
-      const input = shellProcess.input.getWriter();
-      xtermRef.current!.onData((data) => {
-        input.write(data);
-      });
+        shellProcessRef.current = shellProcess;
+
+        // Pipe shell output stream straight into xterm
+        shellProcess.output.pipeTo(
+          new WritableStream({
+            write(data) {
+              xtermRef.current?.write(data);
+            },
+          })
+        );
+
+        const writer = shellProcess.input.getWriter();
+        activeWriter = writer;
+
+        // Bind standard stdin keystrokes
+        const dataListener = xtermRef.current!.onData((data) => {
+          writer.write(data);
+        });
+
+        // Expose command sender callback (Run trigger)
+        if (onCommandReady) {
+          onCommandReady((cmd: string) => {
+            writer.write(cmd);
+          });
+        }
+
+        return () => {
+          dataListener.dispose();
+          writer.releaseLock();
+        };
+      } catch (err) {
+        console.error("Shell launch failed:", err);
+      }
     }
 
     startShell();
-  }, [instance]);
 
+    return () => {
+      if (activeWriter) {
+        try {
+          activeWriter.releaseLock();
+        } catch (e) {}
+      }
+      shellProcessRef.current = null;
+    };
+  }, [instance, onCommandReady]);
+
+  // Handle manual/drag resize events for xterm fitting
   useEffect(() => {
-    if (visible && xtermRef.current) {
-      // Small delay to ensure container is rendered
+    if (xtermRef.current && fitAddonRef.current && visible) {
       setTimeout(() => {
-        const fitAddon = new FitAddon();
-        xtermRef.current!.loadAddon(fitAddon);
-        fitAddon.fit();
-      }, 100);
+        try {
+          fitAddonRef.current?.fit();
+          if (shellProcessRef.current) {
+            shellProcessRef.current.resize({
+              cols: xtermRef.current!.cols,
+              rows: xtermRef.current!.rows,
+            });
+          }
+        } catch (err) {}
+      }, 50);
     }
-  }, [visible]);
+  }, [size, visible]);
 
   return <div ref={terminalRef} className="h-full w-full" />;
 }

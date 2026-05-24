@@ -574,6 +574,7 @@ export function useFiles() {
     deleteFile,
     deleteFolder,
     setFiles,
+    setFolders,
     isInitialized,
   };
 }

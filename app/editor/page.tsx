@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useAI } from "@/lib/hooks/useAI";
 import { useFiles } from "@/lib/hooks/useFiles";
 import { useSettings } from "@/lib/hooks/useSettings";
+import { useWebContainer } from "@/lib/hooks/useWebContainer";
 import { createProjectTemplate, detectProjectCommand, findRunnableProject } from "@/lib/projectTemplates";
 import { Language } from "@/lib/types";
 import { detectLanguage, cn } from "@/lib/utils";
@@ -135,6 +136,34 @@ export default function EditorPage() {
   const filesApi = useFiles();
   const { settings, setSettings } = useSettings();
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+
+  // StackBlitz WebContainer Booting & FS Synchronization
+  const { instance: webContainerInstance, booting: isWebContainerBooting } = useWebContainer(
+    filesApi.files,
+    filesApi.folders,
+    filesApi.setFiles,
+    filesApi.setFolders
+  );
+
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [terminalCommandSender, setTerminalCommandSender] = useState<((cmd: string) => void) | null>(null);
+  const [terminalTextPrinter, setTerminalTextPrinter] = useState<((text: string) => void) | null>(null);
+
+  // Monitor dev server port events from WebContainer to automatically launch the preview iframe
+  useEffect(() => {
+    if (!webContainerInstance) return;
+    const sub = webContainerInstance.on("port", (port, type, url) => {
+      if (type === "open") {
+        console.log(`Port ${port} is open: ${url}`);
+        setPreviewUrl(url);
+        setViewMode("preview");
+        setOutputVisible(true);
+      }
+    });
+    return () => {
+      sub();
+    };
+  }, [webContainerInstance]);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -484,18 +513,65 @@ export default function EditorPage() {
     }
   }
 
+  const getWorkspacePath = (fileId: string): string => {
+    const file = filesApi.files.find(f => f.id === fileId);
+    if (!file) return "";
+    
+    const pathParts = [file.name];
+    let currentParentId = file.parentId;
+    
+    while (currentParentId) {
+      const folder = filesApi.folders.find(f => f.id === currentParentId);
+      if (folder) {
+        pathParts.unshift(folder.name);
+        currentParentId = folder.parentId;
+      } else {
+        break;
+      }
+    }
+    
+    return pathParts.join("/");
+  };
+
   async function runActiveFile() {
     if (!activeFile) return;
     const language = inferRunLanguage(activeFile.name, activeFile.content, activeFile.language);
     if (language !== activeFile.language) {
       filesApi.updateFile(activeFile.id, { language });
     }
+    
     setOutputVisible(true);
     setRunResult(null);
     setIsRunning(true);
-    const result = await runCode(language, activeFile.content);
-    setRunResult(result);
-    setTerminalOutput(prev => prev + `\n[Executing ${activeFile.name}...]\n${result.output}\n`);
+    
+    const filePath = getWorkspacePath(activeFile.id);
+    
+    if (language === "javascript" || language === "typescript") {
+      if (terminalCommandSender) {
+        // Run natively in the WebContainer shell
+        terminalCommandSender(`node ${filePath}\n`);
+      } else {
+        const result = await runCode(language, activeFile.content);
+        setRunResult(result);
+      }
+    } else if (language === "html" || language === "css") {
+      setViewMode("preview");
+    } else {
+      // Cloud runner compiler fallback for Python, Java, C++
+      if (terminalTextPrinter) {
+        terminalTextPrinter(`\r\n\x1b[33m[Executing ${activeFile.name} via cloud runner...]\x1b[0m\r\n`);
+      }
+      
+      const result = await runCode(language, activeFile.content);
+      
+      if (terminalTextPrinter) {
+        const formatted = result.output.replace(/\n/g, "\r\n");
+        terminalTextPrinter(`${formatted}\r\n\x1b[32m[Process completed]\x1b[0m\r\n`);
+      } else {
+        setRunResult(result);
+      }
+    }
+    
     setIsRunning(false);
   }
 
@@ -1187,6 +1263,10 @@ export default function EditorPage() {
                   onClose={() => setOutputVisible(false)}
                   onCommand={handleCommand}
                   viewMode={viewMode}
+                  webContainerInstance={webContainerInstance}
+                  previewUrl={previewUrl}
+                  onCommandReady={setTerminalCommandSender}
+                  onWriteTextReady={setTerminalTextPrinter}
                 />
               </div>
             ) : (
@@ -1194,7 +1274,7 @@ export default function EditorPage() {
               <div className="flex-1 overflow-y-auto bg-[var(--background)] select-none flex flex-col items-center justify-center animate-fade-in-soft">
                 <div className="flex flex-col items-center justify-center -mt-10">
                   {/* Antigravity Logo */}
-                  <svg className="w-[52px] bg-[url(\'\')] h-[52px] text-[var(--foreground)] mb-4 opacity-90 drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-[52px] h-[52px] text-[var(--foreground)] mb-4 opacity-90 drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 3C9 3 7 9 5 14C3.8 17 2.5 20 1 20C4.5 19.5 7 16 8.5 12C9.5 15.5 11 17 12 17C13 17 14.5 15.5 15.5 12C17 16 19.5 19.5 23 20C21.5 20 20.2 17 19 14C17 9 15 3 12 3Z" />
                   </svg>
 
