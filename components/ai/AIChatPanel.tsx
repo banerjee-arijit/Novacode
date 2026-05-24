@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { Sparkles, MoreVertical, Plus, Trash2, ZapOff } from "lucide-react";
+import { Sparkles, MoreVertical, Plus, Trash2, MessageSquare, Lightbulb, Bug, Code2 } from "lucide-react";
 import { AIInput } from "@/components/ai/AIInput";
 import { AIMessage } from "@/components/ai/AIMessage";
 import { ChatMessage, EditorSettings, WorkspaceFile } from "@/lib/types";
@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 type AIChatPanelProps = {
   messages: ChatMessage[];
   loading: boolean;
-  activeFile: WorkspaceFile;
+  activeFile?: WorkspaceFile;
   selectedCode: string;
   settings: EditorSettings;
   onPrompt: (message: string, mode?: string) => void;
@@ -20,7 +20,14 @@ type AIChatPanelProps = {
   onClearChat: () => void;
 };
 
-export function AIChatPanel({ messages, loading, onPrompt, onInsert, onClearChat }: AIChatPanelProps) {
+const QUICK_ACTIONS = [
+  { icon: Bug, label: "Fix bugs", prompt: "Find and fix any bugs in the current code", color: "text-red-400" },
+  { icon: Lightbulb, label: "Explain", prompt: "Explain what this code does", color: "text-yellow-400" },
+  { icon: Code2, label: "Refactor", prompt: "Refactor this code to be cleaner and more maintainable", color: "text-blue-400" },
+  { icon: Sparkles, label: "Optimize", prompt: "Optimize this code for better performance", color: "text-violet-400" },
+];
+
+function AIChatPanelComponent({ messages, loading, activeFile, selectedCode, onPrompt, onInsert, onClearChat }: AIChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,83 +35,127 @@ export function AIChatPanel({ messages, loading, onPrompt, onInsert, onClearChat
   }, [messages, loading]);
 
   return (
-    <aside className="flex h-full min-h-0 flex-col border-l border-[var(--line)] bg-[var(--panel)]">
-      <div className="flex h-14 items-center justify-between border-b border-[var(--line)] px-4 bg-[var(--panel)]">
-        <div className="flex items-center gap-3">
-          <div className="grid h-8 w-8 place-items-center rounded-md border border-[var(--line)] bg-[var(--panel-2)]">
-            <Image src="/icons/novacode-mark.svg" alt="Novacode AI" width={22} height={22} className="relative z-10" />
+    <aside className="flex h-full min-h-0 flex-col bg-[var(--panel)]">
+      {/* Header */}
+      <div className="flex h-11 items-center justify-between border-b border-[var(--line)] px-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--accent)]/15">
+            <Image src="/icons/novacode-mark.svg" alt="Novacode AI" width={14} height={14} className="relative z-10" />
           </div>
-          <div className="flex flex-col justify-center">
-            <span className="text-sm font-bold text-[var(--foreground)] tracking-tight">Novacode AI</span>
-          </div>
+          <span className="text-[13px] font-semibold text-[var(--foreground)] tracking-tight">Novacode AI</span>
+          <span className="text-[9px] text-[var(--muted)] bg-[var(--panel-2)] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider border border-[var(--line)]">
+            Gemini
+          </span>
         </div>
-        <div className="flex items-center gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted)] hover:bg-[var(--line)] hover:text-[var(--foreground)] transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]">
-                <MoreVertical size={16} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-[var(--panel-2)] border-[var(--line)] shadow-xl rounded-xl p-1">
-              <div className="flex items-center justify-between px-2 py-2.5 mb-1 bg-[var(--panel)] rounded-lg border border-[var(--line)] m-1">
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-[var(--foreground)]">Credits</span>
-                  <span className="text-[10px] text-[var(--muted)] mt-0.5">Renews in 14 days</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md border border-indigo-500/20">
-                  <Sparkles size={12} className="text-indigo-400" />
-                  2,500
-                </div>
-              </div>
-              <DropdownMenuSeparator className="bg-[var(--line)] mx-1" />
-              <DropdownMenuItem onClick={onClearChat} className="cursor-pointer gap-2 rounded-md text-[var(--foreground)] focus:bg-[var(--line)] focus:text-[var(--foreground)]">
-                <Plus size={15} />
-                New Chat
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onClearChat} className="cursor-pointer gap-2 rounded-md text-rose-400 focus:bg-[var(--line)] focus:text-rose-400">
-                <Trash2 size={15} />
-                Delete current chat
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[var(--line)] mx-1" />
-              <DropdownMenuItem disabled className="gap-2 rounded-md text-[var(--muted)]">
-                <ZapOff size={15} />
-                Use other models
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--muted)] hover:bg-[var(--panel-2)] hover:text-[var(--foreground)] transition-colors outline-none">
+              <MoreVertical size={14} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44 bg-[var(--panel-2)] border-[var(--line)] rounded-lg p-1 text-xs">
+            <DropdownMenuItem
+              onClick={onClearChat}
+              className="cursor-pointer gap-2 rounded-md py-1.5 px-2 text-[var(--foreground)] focus:bg-[var(--panel-3)] text-xs"
+            >
+              <Plus size={13} />
+              New Chat
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-[var(--line)] my-0.5" />
+            <DropdownMenuItem
+              onClick={onClearChat}
+              className="cursor-pointer gap-2 rounded-md py-1.5 px-2 text-rose-400 focus:bg-rose-400/10 focus:text-rose-400 text-xs"
+            >
+              <Trash2 size={13} />
+              Clear chat
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-auto p-3">
+      {/* Messages area */}
+      <div className="relative min-h-0 flex-1 overflow-auto">
         {messages.length === 0 && !loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <h2 className="text-lg text-[var(--foreground)] tracking-tight">How can I help?</h2>
+          <div className="flex flex-col h-full p-3 gap-3">
+            {/* Empty state with quick actions */}
+            <div className="flex flex-col items-center text-center pt-6 pb-4 gap-2">
+              <div className="h-10 w-10 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-1">
+                <Sparkles size={18} className="text-[var(--accent)]" />
+              </div>
+              <p className="text-[13px] font-medium text-[var(--foreground)]">
+                {activeFile ? `Working on ${activeFile.name}` : "How can I help?"}
+              </p>
+              <p className="text-[11px] text-[var(--muted)] leading-relaxed max-w-[200px]">
+                Ask me anything about your code, or use a quick action below.
+              </p>
+            </div>
+
+            {/* Quick action chips */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => onPrompt(action.prompt)}
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-[11px] text-[var(--foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--panel-3)] transition-all text-left cursor-pointer"
+                >
+                  <action.icon size={12} className={action.color} />
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Context indicator */}
+            {selectedCode && (
+              <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-[var(--accent)]/8 border border-[var(--accent)]/20 text-[11px] text-[var(--muted)]">
+                <Code2 size={11} className="text-[var(--accent)] shrink-0" />
+                <span>
+                  <span className="text-[var(--accent)]">{selectedCode.split("\n").length} lines</span> selected — ask me about it!
+                </span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col gap-0 p-2">
             <AnimatePresence initial={false}>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
-            >
-              <AIMessage message={message} onInsert={onInsert} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {loading && (
-          <div className="flex w-full flex-col px-2 py-3">
-            <div className="flex-1 min-w-0 space-y-3 mt-1">
-              <div className="h-3 w-24 animate-pulse rounded bg-[var(--accent)]/30" />
-              <div className="h-3 w-full animate-pulse rounded bg-[var(--muted)]/20" />
-              <div className="h-3 w-4/5 animate-pulse rounded bg-[var(--muted)]/20" />
-            </div>
-          </div>
-        )}
-            <div ref={bottomRef} className="h-2" />
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <AIMessage message={message} onInsert={onInsert} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {loading && (
+              <div className="flex flex-col px-2 py-3 gap-2">
+                <div className="flex items-center gap-2 text-[11px] text-[var(--muted)]">
+                  <div className="h-4 w-4 rounded-full bg-[var(--accent)]/15 flex items-center justify-center shrink-0">
+                    <Sparkles size={9} className="text-[var(--accent)]" />
+                  </div>
+                  <span>Thinking</span>
+                  <span className="flex gap-0.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="h-1 w-1 rounded-full bg-[var(--accent)]/60 inline-block animate-bounce"
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </span>
+                </div>
+                <div className="space-y-2 pl-6">
+                  <div className="h-2.5 loading-shimmer w-3/4" />
+                  <div className="h-2.5 loading-shimmer w-full" />
+                  <div className="h-2.5 loading-shimmer w-4/5" />
+                </div>
+              </div>
+            )}
+
+            <div ref={bottomRef} className="h-1" />
           </div>
         )}
       </div>
@@ -113,3 +164,12 @@ export function AIChatPanel({ messages, loading, onPrompt, onInsert, onClearChat
     </aside>
   );
 }
+
+export const AIChatPanel = React.memo(AIChatPanelComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.messages === nextProps.messages &&
+    prevProps.loading === nextProps.loading &&
+    prevProps.selectedCode === nextProps.selectedCode &&
+    prevProps.activeFile === nextProps.activeFile
+  );
+});

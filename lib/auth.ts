@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "development-secret-change-me");
 
-export async function createSession(userId: string, email: string) {
-  const token = await new SignJWT({ email })
+export async function createSession(userId: string, email: string, name: string) {
+  const token = await new SignJWT({ email, name })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
     .setIssuedAt()
@@ -26,7 +26,11 @@ export async function getSession() {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret);
-    return { userId: payload.sub ?? "", email: String(payload.email ?? "") };
+    return { 
+      userId: payload.sub ?? "", 
+      email: String(payload.email ?? ""),
+      name: String(payload.name ?? "")
+    };
   } catch {
     return null;
   }

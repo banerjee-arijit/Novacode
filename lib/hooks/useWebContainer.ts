@@ -77,7 +77,7 @@ export function useWebContainer(
 
         // We can't easily watch everything recursively with perfect stability yet, 
         // but we can trigger a sync after commands finish or on a slow interval
-        timeout = setInterval(syncFromContainer, 3000);
+        timeout = setInterval(syncFromContainer, 8000);
       } catch (err) {
         console.error("Watch error:", err);
       }

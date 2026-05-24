@@ -13,6 +13,7 @@ type CodeEditorProps = {
   onChange: (value: string) => void;
   onCursorChange: (line: number, column: number) => void;
   onSelectionChange: (value: string) => void;
+  onSelectionPosition?: (coords: { x: number; y: number } | null) => void;
   highlightRange?: { from: number; to: number } | null;
 };
 
@@ -25,6 +26,7 @@ export function CodeEditor({
   onChange,
   onCursorChange,
   onSelectionChange,
+  onSelectionPosition,
   highlightRange,
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -32,12 +34,14 @@ export function CodeEditor({
   const changeRef = useRef(onChange);
   const cursorRef = useRef(onCursorChange);
   const selectionRef = useRef(onSelectionChange);
+  const selectionPositionRef = useRef(onSelectionPosition);
 
   useEffect(() => {
     changeRef.current = onChange;
     cursorRef.current = onCursorChange;
     selectionRef.current = onSelectionChange;
-  }, [onChange, onCursorChange, onSelectionChange]);
+    selectionPositionRef.current = onSelectionPosition;
+  }, [onChange, onCursorChange, onSelectionChange, onSelectionPosition]);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -52,7 +56,27 @@ export function CodeEditor({
           const view = viewRef.current;
           if (!view) return;
           const range = view.state.selection.main;
-          selectionRef.current(range.empty ? "" : view.state.sliceDoc(range.from, range.to));
+          const selectedText = range.empty ? "" : view.state.sliceDoc(range.from, range.to);
+          selectionRef.current(selectedText);
+
+          // Report selection position for tooltip
+          if (selectionPositionRef.current) {
+            if (!range.empty && selectedText.trim().length > 0) {
+              try {
+                // Get the coordinates of the start of selection
+                const coords = view.coordsAtPos(range.from);
+                if (coords) {
+                  selectionPositionRef.current({ x: coords.left, y: coords.top });
+                } else {
+                  selectionPositionRef.current(null);
+                }
+              } catch {
+                selectionPositionRef.current(null);
+              }
+            } else {
+              selectionPositionRef.current(null);
+            }
+          }
         },
       ),
     });
@@ -82,7 +106,27 @@ export function CodeEditor({
   }, [settings.tabSize]);
 
   useEffect(() => {
-    viewRef.current?.dispatch({
+    const view = viewRef.current;
+    if (!view) return;
+    if (highlightRange) {
+      try {
+        const { from } = highlightRange;
+        if (from > 0 && from <= view.state.doc.lines) {
+          const line = view.state.doc.line(from);
+          view.dispatch({
+            selection: { anchor: line.from },
+            effects: [
+              highlightEffect.of(highlightRange),
+              EditorView.scrollIntoView(line.from, { y: "center" }),
+            ],
+          });
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    view.dispatch({
       effects: highlightEffect.of(highlightRange ?? null),
     });
   }, [highlightRange]);

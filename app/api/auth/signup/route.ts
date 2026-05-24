@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (existing) return NextResponse.json({ error: "An account already exists for this email." }, { status: 409 });
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await User.create({ name, email: email.toLowerCase(), passwordHash });
-    await createSession(String(user._id), user.email);
+    await createSession(String(user._id), user.email, user.name);
     return NextResponse.json({ user: { id: user._id, name: user.name, email: user.email } });
   } catch (error) {
     console.error("Signup error:", error);

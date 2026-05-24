@@ -1,33 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Braces,
   ChevronDown,
   ChevronRight,
-  Code2,
-  FileCode2,
   FilePlus2,
   Folder,
   FolderPlus,
   Pencil,
   Trash2,
-  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Language, WorkspaceFile, WorkspaceFolder } from "@/lib/types";
+import { WorkspaceFile, WorkspaceFolder } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const iconMap: Record<Language, React.ElementType> = {
-  javascript: Braces,
-  typescript: Code2,
-  python: FileCode2,
-  html: FileCode2,
-  css: FileCode2,
-  java: FileCode2,
-  plaintext: FileText,
-};
+import { FileIcon } from "./FileIcon";
 
 type FileExplorerProps = {
   files: WorkspaceFile[];
@@ -44,7 +31,7 @@ type FileExplorerProps = {
 
 type EditingTarget = { type: "file" | "folder"; id: string } | null;
 
-export function FileExplorer({
+function FileExplorerComponent({
   files,
   folders,
   activeFileId,
@@ -61,11 +48,7 @@ export function FileExplorer({
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(folders.map((folder) => folder.id)));
 
   const [error, setError] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   function startRename(target: EditingTarget, name: string) {
     setEditing(target);
@@ -124,19 +107,17 @@ export function FileExplorer({
       .filter((file) => file.parentId === parentId)
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((file) => {
-        const Icon = iconMap[file.language];
         const active = file.id === activeFileId;
         const isEditing = editing?.type === "file" && editing.id === file.id;
         return (
           <div
             key={file.id}
             className={cn(
-              "group flex h-8 items-center gap-1 rounded px-2 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]",
-              active && "bg-[var(--panel-2)] text-[var(--foreground)]",
+              "group flex h-7 items-center gap-1.5 rounded-lg px-2 mx-1.5 text-xs text-[var(--muted)] hover:bg-[var(--line)]/30 hover:text-[var(--foreground)] transition-all cursor-pointer select-none",
+              active && "bg-[var(--line)]/50 text-[var(--foreground)] shadow-sm font-medium"
             )}
-            style={{ paddingLeft: 8 + depth * 14 }}
           >
-            <Icon size={14} className={active ? "text-[var(--accent)]" : "text-[var(--muted)]"} />
+            <FileIcon name={file.name} size={14} className="shrink-0" />
             {isEditing ? (
               <div className="relative flex-1">
                 <Input
@@ -154,25 +135,27 @@ export function FileExplorer({
                       setError(null);
                     }
                   }}
-                  className={cn("h-6", error && "border-red-500 focus-visible:ring-red-500")}
+                  className={cn("h-5 text-xs py-0 px-1 bg-[var(--panel-2)]/65 border border-[var(--line)]/45 focus-visible:ring-[var(--accent)]/30 rounded-md", error && "border-red-500 focus-visible:ring-red-500")}
                 />
                 {error && (
-                  <div className="absolute left-0 top-full z-50 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-md">
+                  <div className="absolute left-0 top-full z-50 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-0.5 text-[10px] text-white shadow-md">
                     {error}
                   </div>
                 )}
               </div>
             ) : (
-              <button className="min-w-0 flex-1 truncate text-left" onClick={() => onSelect(file.id)} title={file.name}>
+              <button className="min-w-0 flex-1 truncate text-left text-xs outline-none cursor-pointer" onClick={() => onSelect(file.id)} title={file.name}>
                 {file.name}
               </button>
             )}
-            <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="Rename" onClick={() => startRename({ type: "file", id: file.id }, file.name)}>
-              <Pencil size={12} />
-            </Button>
-            <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="Delete" onClick={() => onDeleteFile(file.id)}>
-              <Trash2 size={12} />
-            </Button>
+            <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+              <Button size="icon" variant="ghost" className="h-5 w-5 text-[var(--muted)] hover:text-[var(--foreground)] rounded" title="Rename" onClick={() => startRename({ type: "file", id: file.id }, file.name)}>
+                <Pencil size={11} />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-5 w-5 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded" title="Delete" onClick={() => onDeleteFile(file.id)}>
+                <Trash2 size={11} />
+              </Button>
+            </div>
           </div>
         );
       });
@@ -188,13 +171,12 @@ export function FileExplorer({
         return (
           <div key={folder.id}>
             <div
-              className="group flex h-8 items-center gap-1 rounded px-2 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]"
-              style={{ paddingLeft: 6 + depth * 14 }}
+              className="group flex h-7 items-center gap-1 rounded-lg px-1.5 mx-1.5 text-xs text-[var(--muted)] hover:bg-[var(--line)]/30 hover:text-[var(--foreground)] transition-all cursor-pointer select-none"
             >
-              <button onClick={() => toggleFolder(folder.id)} className="text-[var(--muted)]">
-                {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <button onClick={() => toggleFolder(folder.id)} className="text-[var(--muted)] p-0.5 hover:text-[var(--foreground)] outline-none cursor-pointer">
+                {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
               </button>
-              <Folder size={14} className="text-[var(--accent)]" />
+              <Folder size={13} className="text-[var(--accent)] shrink-0" />
               {isEditing ? (
                 <div className="relative flex-1">
                   <Input
@@ -212,37 +194,39 @@ export function FileExplorer({
                         setError(null);
                       }
                     }}
-                    className={cn("h-6", error && "border-red-500 focus-visible:ring-red-500")}
+                    className={cn("h-5 text-xs py-0 px-1 bg-[var(--panel-2)]/65 border border-[var(--line)]/45 focus-visible:ring-[var(--accent)]/30 rounded-md", error && "border-red-500 focus-visible:ring-red-500")}
                   />
                   {error && (
-                    <div className="absolute left-0 top-full z-50 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-md">
+                    <div className="absolute left-0 top-full z-50 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-0.5 text-[10px] text-white shadow-md">
                       {error}
                     </div>
                   )}
                 </div>
               ) : (
-                <button className="min-w-0 flex-1 truncate text-left" onClick={() => toggleFolder(folder.id)} title={folder.name}>
+                <button className="min-w-0 flex-1 truncate text-left text-xs outline-none cursor-pointer" onClick={() => toggleFolder(folder.id)} title={folder.name}>
                   {folder.name}
                 </button>
               )}
-              <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="New file" onClick={(e) => { e.stopPropagation(); handleCreateFile(folder.id); }}>
-                <FilePlus2 size={12} />
-              </Button>
-              <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="New folder" onClick={(e) => { e.stopPropagation(); handleCreateFolder(folder.id); }}>
-                <FolderPlus size={12} />
-              </Button>
-              <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="Rename" onClick={() => startRename({ type: "folder", id: folder.id }, folder.name)}>
-                <Pencil size={12} />
-              </Button>
-              <Button size="icon" variant="ghost" className="hidden h-6 w-6 group-hover:inline-flex" title="Delete" onClick={() => onDeleteFolder(folder.id)}>
-                <Trash2 size={12} />
-              </Button>
+              <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+                <Button size="icon" variant="ghost" className="h-5 w-5 text-[var(--muted)] hover:text-[var(--foreground)] rounded" title="New file" onClick={(e) => { e.stopPropagation(); handleCreateFile(folder.id); }}>
+                  <FilePlus2 size={11} />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5 text-[var(--muted)] hover:text-[var(--foreground)] rounded" title="New folder" onClick={(e) => { e.stopPropagation(); handleCreateFolder(folder.id); }}>
+                  <FolderPlus size={11} />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5 text-[var(--muted)] hover:text-[var(--foreground)] rounded" title="Rename" onClick={() => startRename({ type: "folder", id: folder.id }, folder.name)}>
+                  <Pencil size={11} />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-5 w-5 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded" title="Delete" onClick={() => onDeleteFolder(folder.id)}>
+                  <Trash2 size={11} />
+                </Button>
+              </div>
             </div>
             {open && (
-              <>
+              <div className="ml-3.5 pl-2 border-l border-[var(--line)]/25 flex flex-col gap-0.5 my-0.5">
                 {renderFolders(folder.id, depth + 1)}
                 {renderFiles(folder.id, depth + 1)}
-              </>
+              </div>
             )}
           </div>
         );
@@ -250,30 +234,33 @@ export function FileExplorer({
   }
 
   return (
-    <aside className="flex h-full min-h-0 flex-col border-r border-[var(--line)] bg-[var(--panel)]">
-      <div className="flex h-12 items-center justify-between border-b border-[var(--line)] px-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
-          <Folder size={16} className="text-[var(--accent)]" />
-          Workspace
+    <aside className="flex h-full min-h-0 flex-col border-none bg-transparent select-none">
+      <div className="flex h-9 items-center justify-between border-b border-[var(--line)]/25 px-3 bg-transparent shrink-0">
+        <div className="text-[10px] uppercase tracking-wider font-bold text-[var(--muted)]">
+          Workspace Explorer
         </div>
-        <div className="flex items-center">
-          <Button aria-label="Create file" title="Create file" size="icon" variant="ghost" onClick={() => handleCreateFile(null)}>
-            <FilePlus2 size={16} />
+        <div className="flex items-center gap-0.5">
+          <Button aria-label="Create file" title="New File" size="icon" variant="ghost" className="h-6 w-6 text-[var(--muted)] hover:text-[var(--foreground)] rounded" onClick={() => handleCreateFile(null)}>
+            <FilePlus2 size={13} />
           </Button>
-          <Button aria-label="Create folder" title="Create folder" size="icon" variant="ghost" onClick={() => handleCreateFolder(null)}>
-            <FolderPlus size={16} />
+          <Button aria-label="Create folder" title="New Folder" size="icon" variant="ghost" className="h-6 w-6 text-[var(--muted)] hover:text-[var(--foreground)] rounded" onClick={() => handleCreateFolder(null)}>
+            <FolderPlus size={13} />
           </Button>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-2">
-        {isMounted && (
-          <>
-            {renderFolders(null, 0)}
-            {renderFiles(null, 0)}
-          </>
-        )}
+      <div className="min-h-0 flex-1 overflow-auto py-2">
+        {renderFolders(null, 0)}
+        {renderFiles(null, 0)}
       </div>
     </aside>
   );
 }
+
+export const FileExplorer = React.memo(FileExplorerComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.activeFileId === nextProps.activeFileId &&
+    prevProps.files === nextProps.files &&
+    prevProps.folders === nextProps.folders
+  );
+});

@@ -48,3 +48,4 @@ next-env.d.ts
 # test/scaffold projects (generated inside editor for demo)
 /my-react-app
 /vite-project
+/FUTURE_FEATURES.md

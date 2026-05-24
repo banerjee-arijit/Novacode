@@ -5,6 +5,8 @@ import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
+import { cpp } from "@codemirror/lang-cpp";
+import { markdown } from "@codemirror/lang-markdown";
 import {
   bracketMatching,
   codeFolding,
@@ -70,6 +72,8 @@ export function languageExtension(language: Language): LanguageSupport {
   if (language === "html") return html();
   if (language === "css") return css();
   if (language === "java") return java();
+  if (language === "cpp") return cpp();
+  if (language === "markdown") return markdown();
   if (language === "plaintext") return [] as unknown as LanguageSupport;
   return javascript({ jsx: true, typescript: language === "typescript" });
 }
@@ -104,7 +108,7 @@ export function editorExtensions(
     tabSizeCompartment.of(EditorState.tabSize.of(settings.tabSize)),
     EditorState.changeFilter.of(() => true),
     keymap.of([
-      ...(settings.ghostSuggestions ? [{ key: "Tab", run: acceptGhostSuggestion }] : []),
+      ...(settings.ghostSuggestions ? [{ key: "Tab", run: (view: EditorView) => acceptGhostSuggestion(view, language) }] : []),
       ...closeBracketsKeymap,
       ...defaultKeymap,
       ...searchKeymap,
@@ -113,7 +117,7 @@ export function editorExtensions(
       ...(settings.autocomplete ? completionKeymap : []),
       indentWithTab,
     ]),
-    ...(settings.ghostSuggestions ? [ghostSuggestionExtension()] : []),
+    ...(settings.ghostSuggestions ? [ghostSuggestionExtension(language)] : []),
     EditorView.lineWrapping,
     EditorView.updateListener.of((update) => {
       if (update.docChanged) onUpdate(update.state.doc.toString());
@@ -232,18 +236,18 @@ class GhostWidget extends WidgetType {
   }
 }
 
-function ghostSuggestionExtension() {
+function ghostSuggestionExtension(language: Language) {
   return ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
 
       constructor(view: EditorView) {
-        this.decorations = ghostDecorations(view);
+        this.decorations = ghostDecorations(view, language);
       }
 
       update(update: ViewUpdate) {
         if (update.docChanged || update.selectionSet || update.viewportChanged) {
-          this.decorations = ghostDecorations(update.view);
+          this.decorations = ghostDecorations(update.view, language);
         }
       }
     },
@@ -251,58 +255,165 @@ function ghostSuggestionExtension() {
   );
 }
 
-function ghostDecorations(view: EditorView) {
+function ghostDecorations(view: EditorView, language: Language) {
   const cursor = view.state.selection.main;
   if (!cursor.empty) return Decoration.none;
 
   const line = view.state.doc.lineAt(cursor.head);
   const prefix = line.text.slice(0, cursor.head - line.from);
-  const suggestion = ghostText(prefix);
+  const suggestion = ghostText(prefix, view.state, language);
   if (!suggestion) return Decoration.none;
 
   return Decoration.set([Decoration.widget({ widget: new GhostWidget(suggestion), side: 1 }).range(cursor.head)]);
 }
 
-function ghostText(prefix: string) {
-  const token = prefix.match(/[A-Za-z_$][\w$]*$/)?.[0] ?? "";
-  if (!token) return "";
-  const suggestion = ghostSuggestionForToken(token);
-  if (!suggestion || suggestion === token) return "";
-  return suggestion.slice(token.length);
-}
+function ghostText(prefix: string, state: EditorState, language: Language) {
+  // 1. Check for member access completion (e.g. console.l or console.)
+  const dotMatch = prefix.match(/([\w$]+)\.([\w$]*)$/);
+  if (dotMatch) {
+    const parent = dotMatch[1];
+    const memberPrefix = dotMatch[2] || "";
+    const lowerMember = memberPrefix.toLowerCase();
+    
+    let members: string[] = [];
+    if (parent === "console") {
+      members = ["log", "error", "warn", "info", "clear", "time", "timeEnd"];
+    } else if (parent === "document") {
+      members = ["getElementById", "querySelector", "querySelectorAll", "createElement", "body", "addEventListener"];
+    } else if (parent === "window") {
+      members = ["location", "localStorage", "sessionStorage", "addEventListener", "setTimeout", "setInterval"];
+    } else if (parent === "std" && language === "cpp") {
+      members = ["cout", "cin", "endl", "vector", "string", "map", "set"];
+    } else if ((parent === "self" || parent === "this") && (language === "javascript" || language === "typescript" || language === "python")) {
+      const docStr = state.doc.toString();
+      const thisRegex = new RegExp(`(?:this|self)\\.([A-Za-z_$][\\w$]*)`, "g");
+      const found = new Set<string>();
+      let m;
+      let count = 0;
+      while ((m = thisRegex.exec(docStr)) !== null && count++ < 100) {
+        if (m[1] && m[1] !== memberPrefix) {
+          found.add(m[1]);
+        }
+      }
+      members = Array.from(found);
+    }
+    
+    if (members.length > 0) {
+      const match = members.find(m => m.toLowerCase().startsWith(lowerMember));
+      if (match && match !== memberPrefix) {
+        return match.slice(memberPrefix.length);
+      }
+    }
+  }
 
-function ghostSuggestionForToken(token: string) {
-  const options = [
-    "console.log();",
-    "function name() {\n  \n}",
-    "for (let i = 0; i < length; i++) {\n  \n}",
-    "if (condition) {\n  \n}",
-    "public static void main(String[] args) {\n    \n}",
-    "System.out.println();",
-    "print()",
-    "return ",
-    "const ",
-    "class Main {\n    public static void main(String[] args) {\n        \n    }\n}",
-    "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Document</title>\n</head>\n<body>\n  \n</body>\n</html>",
-    "<div></div>",
-    "<section>\n  \n</section>",
-    "display: flex;",
-    "display: grid;",
-    "background: #0f172a;",
-    "color: #ffffff;",
-    "font-family: system-ui, sans-serif;",
-  ];
+  // 2. Normal word completion
+  const tokenMatch = prefix.match(/[A-Za-z_$][\w$]*$/);
+  if (!tokenMatch) return "";
+  const token = tokenMatch[0];
   const lowerToken = token.toLowerCase();
-  return options.find((option) => option.toLowerCase().startsWith(lowerToken)) ?? "";
+
+  // Limit search area for speed on large files
+  const cursorHead = state.selection.main.head;
+  const docLength = state.doc.length;
+  let searchContent = "";
+  if (docLength < 20000) {
+    searchContent = state.doc.toString();
+  } else {
+    const start = Math.max(0, cursorHead - 5000);
+    const end = Math.min(docLength, cursorHead + 5000);
+    searchContent = state.doc.sliceString(start, end);
+  }
+
+  // Extract identifiers from local document
+  const identifiers = new Set<string>();
+  const wordRegex = /\b[A-Za-z_$][\w$]{2,}\b/g;
+  let match;
+  let count = 0;
+  while ((match = wordRegex.exec(searchContent)) !== null && count++ < 500) {
+    const word = match[0];
+    if (word !== token && word.toLowerCase().startsWith(lowerToken)) {
+      identifiers.add(word);
+    }
+  }
+
+  // Language-specific common keywords & snippets
+  const languageOptions: string[] = [];
+  if (language === "javascript" || language === "typescript") {
+    languageOptions.push(
+      "console.log", "const", "let", "function", "return", "import", "export", 
+      "async", "await", "promise", "interface", "class", "document", "window",
+      "null", "undefined", "true", "false", "typeof", "instanceof"
+    );
+  } else if (language === "python") {
+    languageOptions.push(
+      "print", "def", "return", "import", "from", "class", "self", "elif", "else",
+      "lambda", "yield", "None", "True", "False", "len", "range", "zip", "enumerate"
+    );
+  } else if (language === "java") {
+    languageOptions.push(
+      "System.out.println", "public class", "public static void main(String[] args)", 
+      "private", "protected", "public", "return", "import", "String", "Integer",
+      "class", "interface", "extends", "implements", "new", "null", "true", "false"
+    );
+  } else if (language === "cpp") {
+    languageOptions.push(
+      "std::cout", "std::endl", "#include <iostream>", "#include <vector>", "#include <string>",
+      "using namespace std;", "int main()", "vector", "string", "cout", "nullptr", "return"
+    );
+  } else if (language === "html") {
+    languageOptions.push(
+      "div", "section", "main", "span", "button", "input", "class=", "id=", "href="
+    );
+  } else if (language === "css") {
+    languageOptions.push(
+      "display: flex;", "display: grid;", "justify-content: center;", 
+      "align-items: center;", "background-color: ", "color: ", "border-radius: ", "padding: ", "margin: "
+    );
+  } else if (language === "markdown") {
+    languageOptions.push(
+      "# Header 1", "## Header 2", "### Header 3", "**bold**", "*italic*", "- Bullet item", "[Link](url)"
+    );
+  }
+
+  // Rank matching options
+  type ScoredOption = { option: string; score: number };
+  const scoredOptions: ScoredOption[] = [];
+
+  const addOption = (option: string, baseScore: number) => {
+    if (!option || option === token) return;
+    if (!option.toLowerCase().startsWith(lowerToken)) return;
+    
+    let score = baseScore;
+    if (option.startsWith(token)) {
+      score += 15;
+    }
+    score -= option.length * 0.1;
+    scoredOptions.push({ option, score });
+  };
+
+  for (const id of identifiers) {
+    addOption(id, 20); // Local identifiers prioritised
+  }
+
+  for (const kw of languageOptions) {
+    addOption(kw, 10);
+  }
+
+  if (scoredOptions.length === 0) return "";
+
+  scoredOptions.sort((a, b) => b.score - a.score);
+  const bestMatch = scoredOptions[0].option;
+
+  return bestMatch.slice(token.length);
 }
 
-function acceptGhostSuggestion(view: EditorView) {
+function acceptGhostSuggestion(view: EditorView, language: Language) {
   const cursor = view.state.selection.main;
   if (!cursor.empty) return false;
 
   const line = view.state.doc.lineAt(cursor.head);
   const prefix = line.text.slice(0, cursor.head - line.from);
-  const suggestion = ghostText(prefix);
+  const suggestion = ghostText(prefix, view.state, language);
   if (!suggestion) return false;
 
   view.dispatch({

@@ -1,4 +1,4 @@
-export type Language = "javascript" | "typescript" | "python" | "html" | "css" | "java" | "plaintext";
+export type Language = "javascript" | "typescript" | "python" | "html" | "css" | "java" | "cpp" | "markdown" | "plaintext";
 
 export type ThemeMode = "dark" | "light" | "blueish" | "graphite" | "high-contrast";
 export type AIResponseStyle = "concise" | "detailed";
@@ -20,6 +20,11 @@ export type WorkspaceFolder = {
   parentId: string | null;
   name: string;
   createdAt: string;
+};
+
+export type WorkspaceDraftFile = {
+  path: string;
+  content: string;
 };
 
 export type ChatMessage = {
@@ -50,6 +55,8 @@ export const languageLabels: Record<Language, string> = {
   html: "HTML",
   css: "CSS",
   java: "Java",
+  cpp: "C++",
+  markdown: "Markdown",
   plaintext: "Plain Text",
 };
 
@@ -60,5 +67,7 @@ export const languageExtensions: Record<Language, string> = {
   html: "html",
   css: "css",
   java: "java",
+  cpp: "cpp",
+  markdown: "md",
   plaintext: "txt",
 };

@@ -18,6 +18,8 @@ export function detectLanguage(name: string): Language {
   if (ext === "css") return "css";
   if (ext === "js" || ext === "jsx" || ext === "mjs" || ext === "cjs") return "javascript";
   if (ext === "java") return "java";
+  if (ext === "cpp" || ext === "cc" || ext === "cxx" || ext === "h" || ext === "hpp") return "cpp";
+  if (ext === "md" || ext === "markdown") return "markdown";
   return "plaintext";
 }
 

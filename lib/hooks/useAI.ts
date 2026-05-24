@@ -8,50 +8,67 @@ export function useAI(activeFile: WorkspaceFile | undefined, selectedCode: strin
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
+  async function callAI(params: {
+    message: string;
+    mode?: string;
+    selectedCode?: string;
+    silent?: boolean; // don't add to chat history (for edit mode)
+  }): Promise<string> {
+    if (!activeFile) throw new Error("No active file");
+
+    const body = {
+      message: params.message,
+      mode: params.mode ?? "ask",
+      code: activeFile.content,
+      selectedCode: params.selectedCode ?? selectedCode,
+      filename: activeFile.name,
+      language: activeFile.language,
+      responseStyle: settings.aiStyle,
+      model: settings.aiModel,
+      history: params.silent ? [] : messages.slice(-10),
+    };
+
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = (await response.json()) as { content?: string; error?: string };
+    if (!response.ok) throw new Error(data.error ?? "AI request failed.");
+    return data.content ?? "No response returned.";
+  }
+
   async function sendMessage(content: string, mode = "ask") {
     if (!activeFile) return;
+
     const userMessage: ChatMessage = {
       id: uid("msg"),
       role: "user",
       content,
       createdAt: new Date().toISOString(),
     };
-    setMessages((current) => [...current, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
+
     try {
-      const response = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: content,
-          mode,
-          code: activeFile.content,
-          selectedCode,
-          filename: activeFile.name,
-          language: activeFile.language,
-          responseStyle: settings.aiStyle,
-          model: settings.aiModel,
-          history: messages.slice(-8),
-        }),
-      });
-      const data = (await response.json()) as { content?: string; error?: string };
-      if (!response.ok) throw new Error(data.error ?? "AI request failed.");
-      setMessages((current) => [
-        ...current,
+      const result = await callAI({ message: content, mode });
+      setMessages((prev) => [
+        ...prev,
         {
           id: uid("msg"),
           role: "assistant",
-          content: data.content ?? "No response returned.",
+          content: result,
           createdAt: new Date().toISOString(),
         },
       ]);
     } catch (error) {
-      setMessages((current) => [
-        ...current,
+      setMessages((prev) => [
+        ...prev,
         {
           id: uid("msg"),
           role: "assistant",
-          content: `I could not reach the AI service: ${error instanceof Error ? error.message : "Unknown error"}`,
+          content: `⚠️ ${error instanceof Error ? error.message : "Unknown error"}`,
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -60,9 +77,19 @@ export function useAI(activeFile: WorkspaceFile | undefined, selectedCode: strin
     }
   }
 
+  /** Silent AI call for "Edit with AI" — does not affect chat history */
+  async function editCode(instruction: string, codeToEdit: string): Promise<string> {
+    return callAI({
+      message: instruction,
+      mode: "edit",
+      selectedCode: codeToEdit,
+      silent: true,
+    });
+  }
+
   function clearMessages() {
     setMessages([]);
   }
 
-  return { messages, loading, sendMessage, clearMessages };
+  return { messages, loading, sendMessage, editCode, clearMessages };
 }
