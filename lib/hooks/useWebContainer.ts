@@ -83,7 +83,7 @@ export function useWebContainer(
               if (dirParts.length > 0) {
                 await instance!.fs.mkdir(dirParts.join("/"), { recursive: true });
               }
-              await instance!.fs.writeFile(filePath, file.content);
+              await instance!.fs.writeFile(filePath, file.content ?? "");
             } catch (err) {
               console.error(`Sync error writing ${filePath} to WebContainer:`, err);
             }
@@ -382,7 +382,7 @@ function buildFileTree(files: WorkspaceFile[], folders: WorkspaceFolder[]) {
   });
 
   files.forEach(file => {
-    const fileNode = { file: { contents: file.content } };
+    const fileNode = { file: { contents: file.content ?? "" } };
     if (file.parentId && folderMap.has(file.parentId)) {
       folderMap.get(file.parentId).directory[file.name] = fileNode;
     } else {

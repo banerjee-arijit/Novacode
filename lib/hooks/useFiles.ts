@@ -288,7 +288,11 @@ export function useFiles() {
           for (const file of parsed.files) {
             if (!seenFiles.has(file.id)) {
               seenFiles.add(file.id);
-              uniqueFiles.push({ ...file, parentId: file.parentId ?? null });
+              uniqueFiles.push({ 
+                ...file, 
+                parentId: file.parentId ?? null,
+                content: typeof file.content === "string" ? file.content : "" 
+              });
             }
           }
           setFiles(uniqueFiles);
