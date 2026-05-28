@@ -121,14 +121,14 @@ function OutputPanelComponent({
           />
         )
       ) : (
-        <div className="flex-grow h-[calc(100%-2.25rem)] w-full bg-[#05070a] p-4 font-mono text-xs overflow-y-auto select-text scrollbar-thin relative">
+        <div className="flex-grow h-[calc(100%-2.25rem)] w-full bg-[var(--background)] p-4 font-mono text-xs overflow-y-auto select-text scrollbar-thin relative">
           {isRunning ? (
             <div className="flex h-full w-full flex-col items-center justify-center text-xs text-[var(--muted)] animate-pulse">
               <Loader2 size={16} className="animate-spin mr-2 mb-1" />
               <span>Running code...</span>
             </div>
           ) : result ? (
-            <pre className="whitespace-pre-wrap break-all text-[#e6edf7] leading-relaxed font-mono">
+            <pre className="whitespace-pre-wrap break-all text-[var(--foreground)] leading-relaxed font-mono">
               {result.output}
             </pre>
           ) : (

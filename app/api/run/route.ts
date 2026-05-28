@@ -123,33 +123,59 @@ export async function POST(request: Request) {
 }
 
 async function runPistonFallback(language: string, code: string): Promise<NextResponse> {
-  const langMap: Record<string, string> = {
-    java: "java",
-    python: "python3",
-    cpp: "cpp",
+  const compilerMap: Record<string, string> = {
+    java: "openjdk-jdk-22+36",
+    python: "cpython-3.13.8",
+    cpp: "gcc-head",
   };
-  const pistonLang = langMap[language] || language;
-  
+  const compiler = compilerMap[language];
+  if (!compiler) {
+    return NextResponse.json({ error: `Remote fallback does not support ${language}.` }, { status: 400 });
+  }
+
+  // For Java, Wandbox compiles code in 'prog.java'.
+  // If the user declared a public class (e.g., 'public class index'), javac will fail because the class name doesn't match 'prog.java'.
+  // We strip 'public' keyword from the class declaration to allow compilation.
+  let processedCode = code;
+  if (language === "java") {
+    processedCode = code.replace(/\bpublic\s+class\b/g, "class");
+  }
+
   try {
-    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+    const response = await fetch("https://wandbox.org/api/compile.json", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        language: pistonLang,
-        version: "*",
-        files: [{ content: code }],
+        compiler,
+        code: processedCode,
       }),
     });
-    
+
     if (!response.ok) {
-      throw new Error(`Piston API returned status ${response.status}`);
+      throw new Error(`Wandbox API returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Combine compile/run output
+    const compilerOutput = [data.compiler_output, data.compiler_error].filter(Boolean).join("\n");
+    const programOutput = [data.program_output, data.program_error].filter(Boolean).join("\n");
+    
+    let output = "";
+    if (compilerOutput) {
+      output += compilerOutput + "\n";
+    }
+    if (programOutput) {
+      output += programOutput;
+    }
+    output = output.trim();
+    if (!output) {
+      output = "Program finished without console output.";
     }
     
-    const data = await response.json();
-    const output = data.run?.output || data.run?.stdout || data.run?.stderr || "Program finished without console output.";
     return NextResponse.json({ output });
   } catch (error: any) {
-    return NextResponse.json({ output: `Error: Unable to run code locally or via remote fallback. ${error.message}` });
+    return NextResponse.json({ output: `Error: Unable to run code locally or via remote fallback. Wandbox API error: ${error.message}` });
   }
 }
 
