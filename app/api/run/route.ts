@@ -122,6 +122,37 @@ export async function POST(request: Request) {
   return result;
 }
 
+async function runPistonFallback(language: string, code: string): Promise<NextResponse> {
+  const langMap: Record<string, string> = {
+    java: "java",
+    python: "python3",
+    cpp: "cpp",
+  };
+  const pistonLang = langMap[language] || language;
+  
+  try {
+    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        language: pistonLang,
+        version: "*",
+        files: [{ content: code }],
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Piston API returned status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const output = data.run?.output || data.run?.stdout || data.run?.stderr || "Program finished without console output.";
+    return NextResponse.json({ output });
+  } catch (error: any) {
+    return NextResponse.json({ output: `Error: Unable to run code locally or via remote fallback. ${error.message}` });
+  }
+}
+
 async function runJava(code: string) {
   const dir = await mkdtemp(join(tmpdir(), "forge-java-"));
   const className = code.match(/public\s+class\s+([A-Za-z_$][\w$]*)/)?.[1] ?? code.match(/class\s+([A-Za-z_$][\w$]*)/)?.[1] ?? "Main";
@@ -136,7 +167,10 @@ async function runJava(code: string) {
       maxBuffer: 1024 * 512,
     });
     return NextResponse.json({ output: [stdout, stderr].filter(Boolean).join("\n") || "Program finished without console output." });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "ENOENT" || error?.message?.includes("ENOENT")) {
+      return runPistonFallback("java", code);
+    }
     return NextResponse.json({ output: formatRunnerError(error) });
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -185,6 +219,9 @@ async function runPython(code: string) {
     }
 
     if (runError) {
+      if (runError.code === "ENOENT" || runError.message?.includes("ENOENT")) {
+        return runPistonFallback("python", code);
+      }
       throw runError;
     }
 
@@ -213,7 +250,10 @@ async function runCpp(code: string) {
       maxBuffer: 1024 * 512,
     });
     return NextResponse.json({ output: [stdout, stderr].filter(Boolean).join("\n") || "Program finished without console output." });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "ENOENT" || error?.message?.includes("ENOENT")) {
+      return runPistonFallback("cpp", code);
+    }
     return NextResponse.json({ output: formatRunnerError(error) });
   } finally {
     await rm(dir, { recursive: true, force: true });

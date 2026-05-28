@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Maximize2, Terminal, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef } from "react";
+import { Loader2, Maximize2, X, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Language, WorkspaceFile } from "@/lib/types";
+import { WorkspaceFile } from "@/lib/types";
 import { RunResult, buildPreview } from "@/lib/runCode";
-import { Terminal as WebContainerTerminal } from "./Terminal";
-import { WebContainer } from "@webcontainer/api";
 
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -22,13 +20,10 @@ type OutputPanelProps = {
   onTogglePosition: () => void;
   onResizeStart: () => void;
   onClose: () => void;
-  onCommand?: (command: string) => void;
   currentPath: string;
   viewMode?: "code" | "design" | "preview";
-  webContainerInstance: WebContainer | null;
   previewUrl: string;
-  onCommandReady?: (cb: (cmd: string) => void) => void;
-  onWriteTextReady?: (cb: (text: string) => void) => void;
+  isRunning?: boolean;
 };
 
 function OutputPanelComponent({ 
@@ -38,25 +33,15 @@ function OutputPanelComponent({
   files, 
   position, 
   size, 
-  currentPath, 
   onTogglePosition, 
   onResizeStart, 
   onClose, 
-  onCommand, 
   viewMode,
-  webContainerInstance,
   previewUrl,
-  onCommandReady,
-  onWriteTextReady
+  isRunning = false
 }: OutputPanelProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
-  // Terminal tabs states
-  const [terminalTabs, setTerminalTabs] = useState<Array<{ id: string, name: string }>>([
-    { id: "1", name: "bash" }
-  ]);
-  const [activeTerminalTabId, setActiveTerminalTabId] = useState("1");
-
   const preview = useMemo(() => buildPreview(activeFile, files), [activeFile, files]);
 
   // Synchronize static html/css preview srcdoc
@@ -66,23 +51,6 @@ function OutputPanelComponent({
       iframeRef.current.srcdoc = result?.html ?? preview;
     }
   }, [preview, result?.html, result?.type, visible, activeFile.language, previewUrl, viewMode]);
-
-  const handleAddTab = () => {
-    const newId = String(Date.now());
-    const nextTabs = [...terminalTabs, { id: newId, name: `bash (${terminalTabs.length + 1})` }];
-    setTerminalTabs(nextTabs);
-    setActiveTerminalTabId(newId);
-  };
-
-  const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (terminalTabs.length === 1) return; // Keep at least one
-    const nextTabs = terminalTabs.filter(t => t.id !== tabId);
-    setTerminalTabs(nextTabs);
-    if (activeTerminalTabId === tabId) {
-      setActiveTerminalTabId(nextTabs[nextTabs.length - 1].id);
-    }
-  };
 
   if (!visible) return null;
 
@@ -101,59 +69,30 @@ function OutputPanelComponent({
         />
       )}
       
-      {/* Terminal / Preview Header Bar */}
-      <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--panel)] px-3">
+      {/* Console Header Bar */}
+      <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--panel)] px-3 select-none">
         <div className="flex h-full items-center gap-2 text-[11px]">
           {activeFile.language === "markdown" ? (
-            <span className="text-[var(--muted)] font-semibold uppercase text-[10px] tracking-wider px-3 select-none">
+            <span className="text-[var(--muted)] font-semibold uppercase text-[10px] tracking-wider px-3">
               Markdown Preview
             </span>
+          ) : result?.type === "preview" || viewMode === "preview" ? (
+            <span className="text-[var(--muted)] font-semibold uppercase text-[10px] tracking-wider px-3">
+              Web Preview
+            </span>
           ) : (
-            <div className="flex items-center gap-1.5 pl-1">
-              <span className="text-[var(--muted)] font-semibold uppercase text-[9px] tracking-wider pr-2 border-r border-[var(--line)] select-none">
-                Terminals
-              </span>
-              {terminalTabs.map(tab => {
-                const isActive = tab.id === activeTerminalTabId;
-                return (
-                  <div
-                    key={tab.id}
-                    onClick={() => setActiveTerminalTabId(tab.id)}
-                    className={`flex items-center gap-1.5 h-6 px-2 rounded cursor-pointer text-xs select-none transition-all ${
-                      isActive 
-                        ? "bg-[var(--line)] text-[var(--foreground)] border border-[var(--line)]" 
-                        : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/30"
-                    }`}
-                  >
-                    <Terminal size={11} className="text-[var(--accent)]" />
-                    <span>{tab.name}</span>
-                    {terminalTabs.length > 1 && (
-                      <span
-                        onClick={(e) => handleCloseTab(tab.id, e)}
-                        className="p-0.5 rounded-sm hover:bg-[var(--line)] hover:text-rose-400"
-                      >
-                        <X size={10} />
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-              <button
-                onClick={handleAddTab}
-                title="New Terminal"
-                className="flex items-center justify-center h-6 w-6 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/45 transition-colors cursor-pointer"
-              >
-                <span className="text-sm font-semibold">+</span>
-              </button>
+            <div className="flex items-center gap-1.5 px-3 text-[var(--muted)] font-semibold uppercase text-[10px] tracking-wider">
+              <Terminal size={12} className="text-[var(--accent)] mr-1" />
+              <span>Console Output</span>
             </div>
           )}
         </div>
         <div className="flex items-center gap-1 text-[var(--muted)]">
-          <Button size="icon" variant="ghost" aria-label="Maximize terminal" title="Maximize terminal" className="h-6 w-6 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/50 transition-all">
-            <Maximize2 size={14} />
+          <Button size="icon" variant="ghost" aria-label="Toggle position" title="Toggle position" onClick={onTogglePosition} className="h-6 w-6 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/50 transition-all">
+            <Maximize2 size={13} />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Close output" title="Close terminal" onClick={onClose} className="h-6 w-6 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/50 transition-all">
-            <X size={15} />
+          <Button size="icon" variant="ghost" aria-label="Close output" title="Close console" onClick={onClose} className="h-6 w-6 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--line)]/50 transition-all">
+            <X size={14} />
           </Button>
         </div>
       </div>
@@ -182,31 +121,20 @@ function OutputPanelComponent({
           />
         )
       ) : (
-        <div className="flex-1 h-[calc(100%-2.25rem)] w-full bg-[#05070a] p-1.5 relative">
-          {webContainerInstance ? (
-            terminalTabs.map(tab => {
-              const isActive = tab.id === activeTerminalTabId;
-              return (
-                <div 
-                  key={tab.id} 
-                  className="w-full h-full"
-                  style={{ display: isActive ? "block" : "none" }}
-                >
-                  <WebContainerTerminal 
-                    instance={webContainerInstance} 
-                    visible={visible && isActive}
-                    size={size}
-                    // Bind Run button hooks to the first tab (Bash)
-                    onCommandReady={tab.id === "1" ? onCommandReady : undefined}
-                    onWriteTextReady={tab.id === "1" ? onWriteTextReady : undefined}
-                  />
-                </div>
-              );
-            })
-          ) : (
+        <div className="flex-grow h-[calc(100%-2.25rem)] w-full bg-[#05070a] p-4 font-mono text-xs overflow-y-auto select-text scrollbar-thin relative">
+          {isRunning ? (
             <div className="flex h-full w-full flex-col items-center justify-center text-xs text-[var(--muted)] animate-pulse">
               <Loader2 size={16} className="animate-spin mr-2 mb-1" />
-              <span>Booting StackBlitz WebContainer node runtime...</span>
+              <span>Running code...</span>
+            </div>
+          ) : result ? (
+            <pre className="whitespace-pre-wrap break-all text-[#e6edf7] leading-relaxed font-mono">
+              {result.output}
+            </pre>
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center text-[var(--muted)] text-center px-4">
+              <Terminal size={24} className="opacity-25 mb-2 text-[var(--muted)]" />
+              <span>No output. Click "Run" at the top to execute this code.</span>
             </div>
           )}
         </div>
@@ -225,7 +153,7 @@ export const OutputPanel = React.memo(OutputPanelComponent, (prevProps, nextProp
     prevProps.size === nextProps.size &&
     prevProps.currentPath === nextProps.currentPath &&
     prevProps.viewMode === nextProps.viewMode &&
-    prevProps.webContainerInstance === nextProps.webContainerInstance &&
-    prevProps.previewUrl === nextProps.previewUrl
+    prevProps.previewUrl === nextProps.previewUrl &&
+    prevProps.isRunning === nextProps.isRunning
   );
 });

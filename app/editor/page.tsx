@@ -11,7 +11,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useAI } from "@/lib/hooks/useAI";
 import { useFiles } from "@/lib/hooks/useFiles";
 import { useSettings } from "@/lib/hooks/useSettings";
-import { useWebContainer } from "@/lib/hooks/useWebContainer";
 import { createProjectTemplate, detectProjectCommand, findRunnableProject } from "@/lib/projectTemplates";
 import { Language } from "@/lib/types";
 import { detectLanguage, cn } from "@/lib/utils";
@@ -137,33 +136,7 @@ export default function EditorPage() {
   const { settings, setSettings } = useSettings();
   const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
 
-  // StackBlitz WebContainer Booting & FS Synchronization
-  const { instance: webContainerInstance, booting: isWebContainerBooting } = useWebContainer(
-    filesApi.files,
-    filesApi.folders,
-    filesApi.setFiles,
-    filesApi.setFolders
-  );
-
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [terminalCommandSender, setTerminalCommandSender] = useState<((cmd: string) => void) | null>(null);
-  const [terminalTextPrinter, setTerminalTextPrinter] = useState<((text: string) => void) | null>(null);
-
-  // Monitor dev server port events from WebContainer to automatically launch the preview iframe
-  useEffect(() => {
-    if (!webContainerInstance) return;
-    const sub = webContainerInstance.on("port", (port, type, url) => {
-      if (type === "open") {
-        console.log(`Port ${port} is open: ${url}`);
-        setPreviewUrl(url);
-        setViewMode("preview");
-        setOutputVisible(true);
-      }
-    });
-    return () => {
-      sub();
-    };
-  }, [webContainerInstance]);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -544,32 +517,11 @@ export default function EditorPage() {
     setRunResult(null);
     setIsRunning(true);
     
-    const filePath = getWorkspacePath(activeFile.id);
-    
-    if (language === "javascript" || language === "typescript") {
-      if (terminalCommandSender) {
-        // Run natively in the WebContainer shell
-        terminalCommandSender(`node ${filePath}\n`);
-      } else {
-        const result = await runCode(language, activeFile.content);
-        setRunResult(result);
-      }
-    } else if (language === "html" || language === "css") {
+    if (language === "html" || language === "css") {
       setViewMode("preview");
     } else {
-      // Cloud runner compiler fallback for Python, Java, C++
-      if (terminalTextPrinter) {
-        terminalTextPrinter(`\r\n\x1b[33m[Executing ${activeFile.name} via cloud runner...]\x1b[0m\r\n`);
-      }
-      
       const result = await runCode(language, activeFile.content);
-      
-      if (terminalTextPrinter) {
-        const formatted = result.output.replace(/\n/g, "\r\n");
-        terminalTextPrinter(`${formatted}\r\n\x1b[32m[Process completed]\x1b[0m\r\n`);
-      } else {
-        setRunResult(result);
-      }
+      setRunResult(result);
     }
     
     setIsRunning(false);
@@ -1252,7 +1204,7 @@ export default function EditorPage() {
                 )}
                 <OutputPanel
                   visible={outputVisible}
-                  result={runResult || { type: "console", output: terminalOutput }}
+                  result={runResult}
                   activeFile={activeFile}
                   files={filesApi.files}
                   position={terminalPosition}
@@ -1261,12 +1213,9 @@ export default function EditorPage() {
                   onTogglePosition={() => setTerminalPosition(p => p === "bottom" ? "right" : "bottom")}
                   onResizeStart={() => startResize("terminal")}
                   onClose={() => setOutputVisible(false)}
-                  onCommand={handleCommand}
                   viewMode={viewMode}
-                  webContainerInstance={webContainerInstance}
                   previewUrl={previewUrl}
-                  onCommandReady={setTerminalCommandSender}
-                  onWriteTextReady={setTerminalTextPrinter}
+                  isRunning={isRunning}
                 />
               </div>
             ) : (

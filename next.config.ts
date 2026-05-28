@@ -3,9 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Compress responses — gzip saves 60-80% on JS bundle sizes
   compress: true,
+  cacheComponents: true,
 
   experimental: {
     turbopackFileSystemCacheForDev: true,
+    serverComponentsHmrCache: true,
+    instantNavigationDevToolsToggle: true,
     optimizePackageImports: [
       "lucide-react",
       "@codemirror/state",
