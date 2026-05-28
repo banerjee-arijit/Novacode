@@ -1222,13 +1222,20 @@ export default function EditorPage() {
               /* Welcome Dashboard Screen */
               <div className="flex-1 overflow-y-auto bg-[var(--background)] select-none flex flex-col items-center justify-center animate-fade-in-soft">
                 <div className="flex flex-col items-center justify-center -mt-10">
-                  {/* Antigravity Logo */}
-                  <svg className="w-[52px] h-[52px] text-[var(--foreground)] mb-4 opacity-90 drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 3C9 3 7 9 5 14C3.8 17 2.5 20 1 20C4.5 19.5 7 16 8.5 12C9.5 15.5 11 17 12 17C13 17 14.5 15.5 15.5 12C17 16 19.5 19.5 23 20C21.5 20 20.2 17 19 14C17 9 15 3 12 3Z" />
-                  </svg>
+                  {/* novaCode Logo */}
+                  <div className="relative mb-4 flex items-center justify-center w-16 h-16">
+                    <div className="absolute inset-0 bg-[var(--accent)] rounded-full blur-xl opacity-20 animate-pulse" />
+                    <svg className="relative w-14 h-14 text-[var(--accent)] drop-shadow-[0_0_8px_rgba(6,182,212,0.3)] transition-all duration-300 hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" fill="currentColor" fillOpacity="0.08" />
+                      <line x1="12" y1="22" x2="12" y2="15.5" />
+                      <polyline points="22 8.5 12 15.5 2 8.5" />
+                      <line x1="12" y1="2" x2="12" y2="8.5" />
+                      <path d="M9 13l-2.5-2.5 2.5-2.5M15 8l2.5 2.5-2.5 2.5" stroke="var(--foreground)" strokeWidth="1.5" opacity="0.85" />
+                    </svg>
+                  </div>
 
-                  <h1 className="text-[20px] text-[var(--foreground)] font-normal mb-16 tracking-wide drop-shadow-sm">
-                    Antigravity IDE
+                  <h1 className="text-[22px] text-[var(--foreground)] font-semibold mb-16 tracking-wide drop-shadow-sm">
+                    novaCode
                   </h1>
 
                   <div className="flex items-center gap-[120px] text-[var(--muted)] text-[13px] hover:text-[var(--foreground)] transition-colors cursor-pointer" onClick={() => setAiEditOpen(true)}>

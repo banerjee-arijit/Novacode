@@ -498,7 +498,7 @@ export default function SettingsPage() {
             {[
               { id: "user", label: "User" },
               { id: "workspace", label: "Workspace" },
-              { id: "antigravity", label: "Antigravity IDE Settings" }
+              { id: "antigravity", label: "novaCode Settings" }
             ].map((tab) => (
               <button
                 key={tab.id}
