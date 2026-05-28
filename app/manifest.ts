@@ -14,13 +14,13 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       {
         src: '/icons/novacode-icon.svg',
-        sizes: 'any',
+        sizes: '192x192 512x512',
         type: 'image/svg+xml',
         purpose: 'any',
       },
       {
         src: '/icons/novacode-icon.svg',
-        sizes: 'any',
+        sizes: '192x192 512x512',
         type: 'image/svg+xml',
         purpose: 'maskable',
       },

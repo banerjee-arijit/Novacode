@@ -1,6 +1,13 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="16" fill="#0E1520"/>
-  <path d="M26 22L16 32L26 42" stroke="#E6EDF7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M38 22L48 32L38 42" stroke="#E6EDF7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M35 18L29 46" stroke="#37D5FF" stroke-width="5" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="16" fill="#05070a"/>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Floating caret/apex representing upward levitation -->
+    <path d="M22 22L32 12L42 22" stroke="#37d5ff" stroke-width="5"/>
+    <!-- Left Code Bracket leg -->
+    <path d="M15 50L25 38L15 26" stroke="#e6edf7" stroke-width="5"/>
+    <!-- Right Code Bracket leg -->
+    <path d="M49 50L39 38L49 26" stroke="#e6edf7" stroke-width="5"/>
+    <!-- Levitating orb in the center -->
+    <circle cx="32" cy="38" r="3.5" fill="#37d5ff"/>
+  </g>
 </svg>

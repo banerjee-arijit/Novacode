@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PWARegister } from "./pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <body className="min-h-full overflow-hidden">
+        <PWARegister />
         {children}
       </body>
     </html>

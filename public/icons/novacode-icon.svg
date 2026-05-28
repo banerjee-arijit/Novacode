@@ -1,7 +1,22 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="112" fill="#05070A"/>
-  <rect x="72" y="72" width="368" height="368" rx="84" fill="#0E1520" stroke="#37D5FF" stroke-width="18"/>
-  <path d="M206 178L130 256L206 334" stroke="#E6EDF7" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M306 178L382 256L306 334" stroke="#E6EDF7" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M274 146L238 366" stroke="#37D5FF" stroke-width="28" stroke-linecap="round"/>
+  <rect width="512" height="512" rx="120" fill="#05070a"/>
+  <!-- Ambient background glow -->
+  <circle cx="256" cy="256" r="160" fill="#37d5ff" opacity="0.15" filter="url(#glow)"/>
+  
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Floating caret/apex representing upward levitation -->
+    <path d="M180 180L256 104L332 180" stroke="#37d5ff" stroke-width="36"/>
+    <!-- Left Code Bracket leg -->
+    <path d="M120 400L200 300L120 200" stroke="#e6edf7" stroke-width="36"/>
+    <!-- Right Code Bracket leg -->
+    <path d="M392 400L312 300L392 200" stroke="#e6edf7" stroke-width="36"/>
+    <!-- Levitating orb in the center -->
+    <circle cx="256" cy="300" r="28" fill="#37d5ff"/>
+  </g>
+
+  <defs>
+    <filter id="glow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="60" result="blur"/>
+    </filter>
+  </defs>
 </svg>

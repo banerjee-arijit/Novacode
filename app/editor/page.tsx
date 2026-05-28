@@ -703,13 +703,17 @@ export default function EditorPage() {
       <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] bg-[var(--panel)] px-3 select-none z-30">
         {/* Left Side: Logo + Menus */}
         <div className="flex items-center gap-2">
-          {/* Static geometric Logo */}
+          {/* Levitating Antigravity Logo */}
           <div className="flex items-center gap-1.5 shrink-0 mr-2">
-            <svg className="h-4.5 w-4.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" fill="currentColor" fillOpacity="0.15" />
-              <line x1="12" y1="22" x2="12" y2="15.5" />
-              <polyline points="22 8.5 12 15.5 2 8.5" />
-              <line x1="12" y1="2" x2="12" y2="8.5" />
+            <svg className="h-4.5 w-4.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              {/* Floating apex caret */}
+              <path d="M8 7L12 3L16 7" stroke="currentColor" className="animate-[pulse_1.5s_infinite_alternate]" />
+              {/* Left bracket leg */}
+              <path d="M5 19L9 14L5 9" />
+              {/* Right bracket leg */}
+              <path d="M19 19L15 14L19 9" />
+              {/* Central orb */}
+              <circle cx="12" cy="14" r="1.2" fill="currentColor" stroke="none" />
             </svg>
           </div>
 
@@ -1222,20 +1226,23 @@ export default function EditorPage() {
               /* Welcome Dashboard Screen */
               <div className="flex-1 overflow-y-auto bg-[var(--background)] select-none flex flex-col items-center justify-center animate-fade-in-soft">
                 <div className="flex flex-col items-center justify-center -mt-10">
-                  {/* novaCode Logo */}
-                  <div className="relative mb-4 flex items-center justify-center w-16 h-16">
-                    <div className="absolute inset-0 bg-[var(--accent)] rounded-full blur-xl opacity-20 animate-pulse" />
-                    <svg className="relative w-14 h-14 text-[var(--accent)] drop-shadow-[0_0_8px_rgba(6,182,212,0.3)] transition-all duration-300 hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" fill="currentColor" fillOpacity="0.08" />
-                      <line x1="12" y1="22" x2="12" y2="15.5" />
-                      <polyline points="22 8.5 12 15.5 2 8.5" />
-                      <line x1="12" y1="2" x2="12" y2="8.5" />
-                      <path d="M9 13l-2.5-2.5 2.5-2.5M15 8l2.5 2.5-2.5 2.5" stroke="var(--foreground)" strokeWidth="1.5" opacity="0.85" />
+                  {/* Antigravity Logo */}
+                  <div className="relative mb-4 flex items-center justify-center w-20 h-20">
+                    <div className="absolute inset-0 bg-[var(--accent)] rounded-full blur-2xl opacity-25 animate-pulse" />
+                    <svg className="relative w-16 h-16 text-[var(--accent)] drop-shadow-[0_0_12px_rgba(55,213,255,0.4)] transition-all duration-300 hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Floating apex caret */}
+                      <path d="M8 8L12 4L16 8" strokeWidth="2.5" className="animate-[pulse_1.5s_infinite_alternate]" />
+                      {/* Left Code Bracket leg */}
+                      <path d="M5 19L9 14L5 9" stroke="var(--foreground)" strokeWidth="2" />
+                      {/* Right Code Bracket leg */}
+                      <path d="M19 19L15 14L19 9" stroke="var(--foreground)" strokeWidth="2" />
+                      {/* Levitating orb in the center */}
+                      <circle cx="12" cy="14" r="1.5" fill="currentColor" stroke="none" />
                     </svg>
                   </div>
 
-                  <h1 className="text-[22px] text-[var(--foreground)] font-semibold mb-16 tracking-wide drop-shadow-sm">
-                    novaCode
+                  <h1 className="text-[22px] text-[var(--foreground)] font-semibold mb-16 tracking-wide drop-shadow-sm font-sans">
+                    NovaCode <span className="text-[var(--accent)] font-normal text-xs align-super ml-0.5">AI</span>
                   </h1>
 
                   <div className="flex items-center gap-[120px] text-[var(--muted)] text-[13px] hover:text-[var(--foreground)] transition-colors cursor-pointer" onClick={() => setAiEditOpen(true)}>
